@@ -1,0 +1,8 @@
+RuntimeContext and execution environment for FlowScript workflows.
+
+This directory contains the runtime system that:
+- Provides execution context for workflow nodes
+- Manages runtime variables and environment
+- Handles dependency injection for node execution
+- Tracks execution metrics and performance
+- Manages resource allocation and cleanup

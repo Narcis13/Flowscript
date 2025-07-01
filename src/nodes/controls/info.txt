@@ -1,0 +1,8 @@
+Control flow nodes for workflow logic and routing.
+
+This directory contains control flow nodes including:
+- Conditional nodes (if/else logic)
+- Loop nodes (for, while, foreach iterations)
+- Switch/case nodes for multi-branch logic
+- Parallel execution nodes
+- Error handling and retry nodes

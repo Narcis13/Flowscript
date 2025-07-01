@@ -1,0 +1,8 @@
+WebSocket server implementation for real-time communication.
+
+This directory contains WebSocket functionality for:
+- Real-time workflow execution updates
+- Live debugging and monitoring
+- Human-in-the-loop interaction channels
+- Event streaming for workflow events
+- Bidirectional communication for interactive nodes

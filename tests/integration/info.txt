@@ -1,0 +1,8 @@
+Integration tests for FlowScript workflows and systems.
+
+This directory contains integration tests for:
+- End-to-end workflow execution scenarios
+- API integration testing
+- WebSocket communication testing
+- Complex workflow patterns and edge cases
+- Performance and stress testing

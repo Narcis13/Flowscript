@@ -1,0 +1,8 @@
+Node registry system for dynamic loading and management.
+
+This directory contains the registry system that:
+- Registers and catalogs available node types
+- Provides node discovery and lookup functionality
+- Manages node metadata and capabilities
+- Handles dynamic node loading and initialization
+- Validates node configurations and dependencies

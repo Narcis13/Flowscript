@@ -1,0 +1,8 @@
+TypeScript interfaces and type definitions for FlowScript.
+
+This directory contains all the core type definitions used throughout the FlowScript system, including:
+- Workflow and node type interfaces
+- State management types
+- Runtime context types
+- API request/response types
+- Event and message types for WebSocket communication

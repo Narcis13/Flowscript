@@ -1,0 +1,8 @@
+Action node implementations for workflow tasks.
+
+This directory contains various action nodes that perform specific tasks:
+- HTTP request nodes for API interactions
+- Database query nodes for data operations
+- File system nodes for file manipulation
+- Transform nodes for data processing
+- Integration nodes for external services

@@ -1,0 +1,8 @@
+Workflow executor and control flow logic implementation.
+
+This directory contains the core execution engine responsible for:
+- Orchestrating workflow execution
+- Managing node execution order and dependencies
+- Handling control flow (sequential, parallel, conditional)
+- Processing node results and routing
+- Managing execution lifecycle and error handling

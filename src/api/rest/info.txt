@@ -1,0 +1,8 @@
+Hono REST API endpoints for FlowScript server.
+
+This directory contains REST API implementations including:
+- Workflow management endpoints (CRUD operations)
+- Workflow execution endpoints (start, stop, status)
+- Node configuration endpoints
+- Authentication and authorization middleware
+- API documentation and OpenAPI specs

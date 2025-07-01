@@ -1,0 +1,8 @@
+Utility functions and helpers for FlowScript.
+
+This directory contains shared utilities including:
+- Data validation and sanitization functions
+- Error handling utilities
+- Logging and debugging helpers
+- Common data transformations
+- Performance monitoring utilities

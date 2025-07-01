@@ -1,0 +1,9 @@
+Example workflow definitions demonstrating FlowScript capabilities.
+
+This directory contains example workflows showcasing:
+- Basic workflow patterns (sequential, parallel execution)
+- Human-in-the-loop approval workflows
+- Data processing pipelines
+- API integration workflows
+- Error handling and retry patterns
+- Complex control flow examples

@@ -1,0 +1,8 @@
+Human interaction nodes for Human-in-the-Loop (HITL) workflows.
+
+This directory contains nodes that enable human interaction:
+- Approval nodes requiring human authorization
+- Form nodes for collecting user input
+- Review nodes for human validation
+- Notification nodes for alerting users
+- Task assignment nodes for workflow delegation

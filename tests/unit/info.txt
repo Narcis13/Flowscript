@@ -1,0 +1,8 @@
+Unit tests for individual FlowScript components.
+
+This directory contains unit tests for:
+- Core components (StateManager, RuntimeContext, Executor)
+- Individual node implementations
+- Utility functions
+- API endpoint handlers
+- Type validation and interfaces

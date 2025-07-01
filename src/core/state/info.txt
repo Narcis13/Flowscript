@@ -1,0 +1,8 @@
+StateManager implementation for workflow state management.
+
+This directory contains the state management system responsible for:
+- Tracking workflow execution state
+- Managing node execution results
+- Persisting and retrieving workflow data
+- Handling state transitions and updates
+- Providing state snapshots for debugging and recovery
