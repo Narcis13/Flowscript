@@ -28,8 +28,8 @@
 - [x] Implement expression evaluator for conditions
 
 ## Phase 5: Human-in-the-Loop
-- [ ] Implement human node type with form schema support
-- [ ] Create HITL pause/resume mechanism
+- [x] Implement human node type with form schema support
+- [x] Create HITL pause/resume mechanism
 
 ## Phase 6: API Layer
 - [ ] Set up Hono REST API server structure
@@ -61,9 +61,9 @@
 
 ## Progress Tracking
 - **Total Tasks**: 40
-- **Completed**: 19
+- **Completed**: 21
 - **In Progress**: 0
-- **Remaining**: 21
+- **Remaining**: 19
 
 ## Notes
 - Update checkboxes as tasks are completed
