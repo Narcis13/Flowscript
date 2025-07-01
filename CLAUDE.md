@@ -30,6 +30,14 @@ src/
 └── utils/         # Utility functions
 ```
 
+# VERY IMPORTANT
+
+  At the very start of every coding sessiom read the following docs:
+  - A succint presentation of the specification of this project at: /docs/specs.md
+  - The implementation plan at: /docs/implementation-plan.md
+  - tasks/todo.md to evaluate the phase of the development we ar in
+  After you implement something you MUST update the /tasks/todo.md so we can track the progress. If the task(s) you just implemented aent included in todo.md update this todo.md file accordingly.
+
 ## Common Commands
 
 ```bash
