@@ -23,23 +23,51 @@ export interface EdgeMap {
 }
 
 /**
- * Base interface for all nodes
+ * Simple edge map with lazy evaluation functions (as per spec)
+ */
+export interface SimpleEdgeMap {
+  [edgeName: string]: () => any;
+}
+
+/**
+ * AI hints for node metadata
+ */
+export interface AIHints {
+  purpose: string;
+  when_to_use: string;
+  expected_edges: string[];
+  example_usage?: string;
+}
+
+/**
+ * Human interaction configuration
+ */
+export interface HumanInteraction {
+  formSchema?: any; // JSONSchema type
+  uiHints?: any; // UIHints type
+  timeout?: number;
+}
+
+/**
+ * Node metadata
+ */
+export interface NodeMetadata {
+  name: string;
+  description: string;
+  type?: 'action' | 'human' | 'control';
+  ai_hints: AIHints;
+  humanInteraction?: HumanInteraction;
+}
+
+/**
+ * Base interface for all nodes (as per spec)
  */
 export interface Node {
-  /** Unique identifier for the node */
-  id: string;
-  
-  /** Type of the node (e.g., "action", "condition", "human") */
-  type: string;
-  
-  /** Optional display name */
-  name?: string;
-  
-  /** Node-specific configuration */
-  config?: Record<string, any>;
+  /** Node metadata */
+  metadata: NodeMetadata;
   
   /** Execute the node and return edges */
-  execute(context: ExecutionContext): Promise<EdgeMap>;
+  execute(context: ExecutionContext): Promise<SimpleEdgeMap>;
 }
 
 /**

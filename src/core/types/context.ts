@@ -3,6 +3,7 @@
  */
 
 import { StateManager } from '../state';
+import { RuntimeContext } from '../runtime';
 
 /**
  * Represents the execution context passed to nodes
@@ -14,13 +15,8 @@ export interface ExecutionContext {
   /** Node-specific configuration */
   config?: Record<string, any>;
   
-  /** Runtime information */
-  runtime: {
-    workflowId: string;
-    executionId: string;
-    nodeId: string;
-    timestamp: number;
-  };
+  /** Runtime context for advanced interactions */
+  runtime: RuntimeContext;
   
   /** Previous node's output data */
   previousData?: any;
