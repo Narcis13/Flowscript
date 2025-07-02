@@ -28,6 +28,7 @@ export const ServerMessageTypes = {
   WORKFLOW_COMPLETED: 'workflow_completed',
   WORKFLOW_FAILED: 'workflow_failed',
   HUMAN_INTERACTION_REQUIRED: 'human_interaction_required',
+  HUMAN_INTERACTION_TIMEOUT: 'human_interaction_timeout',
   STATE_UPDATED: 'state_updated',
   WORKFLOW_EVENT: 'workflow_event'
 } as const;

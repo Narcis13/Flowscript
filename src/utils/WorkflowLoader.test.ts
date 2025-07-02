@@ -2,7 +2,7 @@
  * Tests for WorkflowLoader
  */
 
-import { WorkflowLoader, createWorkflowLoader } from './WorkflowLoader';
+import { WorkflowLoader } from './WorkflowLoader';
 import { WorkflowDefinition } from '../core/types/workflow';
 import * as fs from 'fs/promises';
 import * as path from 'path';

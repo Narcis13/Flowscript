@@ -1,0 +1,24 @@
+{
+  "id": "data-processing-example",
+  "name": "Data Processing Pipeline",
+  "initialState": {
+    "documents": ["doc1.txt", "doc2.txt", "doc3.txt"],
+    "processed": 0,
+    "results": []
+  },
+  "nodes": [
+    "initializePipeline",
+    {"logError": {"level": "info", "message": "Starting document processing"}},
+    [
+      {"forEach": {"items": "$.documents", "as": "currentDoc"}},
+      [
+        {"logError": {"level": "debug", "message": "Processing document: {{currentDoc}}"}},
+        {"processData": {"operation": "transform", "transformFn": "doc => doc.toUpperCase()"}},
+        {"saveResults": {"destination": "memory", "path": "$.results"}},
+        {"incrementCounter": {"field": "processed"}}
+      ]
+    ],
+    {"generateReport": {"format": "json", "fields": ["processed", "results"]}},
+    {"sendNotifications": {"channel": "webhook", "url": "https://example.com/webhook", "message": "Processing complete"}}
+  ]
+}

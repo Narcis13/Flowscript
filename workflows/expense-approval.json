@@ -1,0 +1,48 @@
+{
+  "id": "expense-approval",
+  "name": "Expense Approval Workflow",
+  "initialState": {
+    "expense": {
+      "amount": 150,
+      "description": "Team lunch",
+      "employee": "John Doe"
+    },
+    "approved": false,
+    "approver": null
+  },
+  "nodes": [
+    {"validateData": {"schema": {"type": "object", "properties": {"amount": {"type": "number"}}}, "dataPath": "$.expense"}},
+    [
+      {"checkValue": {"path": "$.expense.amount", "operator": "lessThan", "value": 100}},
+      {
+        "true": [
+          {"setFlag": {"flag": "approved", "value": true}},
+          {"logError": {"level": "info", "message": "Auto-approved: amount under $100"}}
+        ],
+        "false": [
+          {"logError": {"level": "info", "message": "Manual approval required: amount over $100"}},
+          "approveExpense",
+          [
+            "approveExpense",
+            {
+              "approved": [
+                {"setFlag": {"flag": "approved", "value": true}},
+                {"setData": {"path": "$.approver", "value": "Manager"}},
+                {"sendNotifications": {"channel": "email", "to": "finance@company.com", "subject": "Expense Approved"}}
+              ],
+              "rejected": [
+                {"setFlag": {"flag": "approved", "value": false}},
+                {"sendNotifications": {"channel": "email", "to": "employee@company.com", "subject": "Expense Rejected"}}
+              ],
+              "needsInfo": [
+                {"logError": {"level": "warn", "message": "Additional information requested"}},
+                {"sendNotifications": {"channel": "slack", "channel": "#expenses", "message": "More info needed for expense"}}
+              ]
+            }
+          ]
+        ]
+      }
+    ],
+    {"generateReport": {"format": "html", "template": "<h1>Expense Report</h1><p>Status: {{approved ? 'Approved' : 'Rejected'}}</p>"}}
+  ]
+}

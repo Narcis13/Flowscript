@@ -4,6 +4,9 @@
   "description": "A declarative workflow system for orchestrating complex processes with human-in-the-loop capabilities",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "flowscript": "./dist/cli/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
@@ -43,6 +46,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
+    "commander": "^14.0.0",
     "hono": "^4.0.1",
     "ws": "^8.16.0",
     "zod": "^3.22.4"

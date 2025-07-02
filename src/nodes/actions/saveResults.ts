@@ -168,7 +168,7 @@ function formatData(data: any, format: string): any {
 
 function convertToXml(data: any, rootName = 'root'): string {
   if (Array.isArray(data)) {
-    const items = data.map((item, index) => 
+    const items = data.map((item) => 
       convertToXml(item, 'item')
     ).join('\n');
     return `<${rootName}>\n${items}\n</${rootName}>`;

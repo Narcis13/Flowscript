@@ -178,7 +178,7 @@ async function applyFilter(data: any, operation: any): Promise<any> {
   }
 }
 
-async function processBatch(data: any, operation: any, batchSize: number): Promise<any> {
+async function processBatch(data: any, _operation: any, batchSize: number): Promise<any> {
   if (!Array.isArray(data)) {
     throw new Error('Batch processing requires array input');
   }

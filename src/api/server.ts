@@ -3,7 +3,6 @@
  */
 
 import { createServer } from 'http';
-import { startServer as startRestServer } from './rest/server';
 import { FlowScriptWebSocketServer } from './websocket';
 import { ExecutionManager, WorkflowStorage } from './services';
 

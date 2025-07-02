@@ -1,5 +1,6 @@
 import { Node, NodeMetadata, SimpleEdgeMap } from '../../core/types/node';
 import { ExecutionContext } from '../../core/types/context';
+import { WorkflowEvent } from '../../core/types/events';
 
 export class LogErrorNode implements Node {
   metadata: NodeMetadata = {
@@ -54,8 +55,7 @@ export class LogErrorNode implements Node {
       if (includeNodeInfo && context.runtime) {
         logEntry.nodeInfo = {
           workflowId: context.runtime.workflowId,
-          executionId: context.runtime.executionId,
-          nodeId: context.runtime.currentNodeId
+          executionId: context.runtime.executionId
         };
       }
       
@@ -118,16 +118,21 @@ export class LogErrorNode implements Node {
       context.state.set(metricsPath, metrics);
       
       // Emit event if runtime is available
+      // Emit state update for log entries (logging is state tracking)
       if (context.runtime && context.runtime.emit) {
         context.runtime.emit({
-          event: 'LOG_ENTRY',
+          event: WorkflowEvent.STATE_UPDATED,
           workflowId: context.runtime.workflowId,
           executionId: context.runtime.executionId,
           timestamp: Date.now(),
           data: {
-            level,
-            message,
-            code
+            path: '$.logs',
+            value: {
+              level,
+              message,
+              code,
+              timestamp: new Date().toISOString()
+            }
           }
         });
       }

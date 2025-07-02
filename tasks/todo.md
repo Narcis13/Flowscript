@@ -46,12 +46,13 @@
 - [x] Build execution manager to track running workflows
 
 ## Phase 9: Quality & Tooling
+- [x] Create CLI tool for workflow management (run, validate, list)
 - [ ] Implement workflow definition validation
 - [ ] Create unit tests for StateManager
 - [ ] Create unit tests for node execution
 - [ ] Create unit tests for workflow executor
 - [ ] Create integration tests for HITL scenarios
-- [ ] Build example workflows (expense approval, document processing)
+- [x] Build example workflows (expense approval, document processing)
 - [ ] Create development scripts (build, test, dev server)
 - [ ] Set up ESLint and Prettier configuration
 
@@ -60,10 +61,10 @@
 - [ ] Add persistence hooks to StateManager
 
 ## Progress Tracking
-- **Total Tasks**: 40
-- **Completed**: 29
+- **Total Tasks**: 41
+- **Completed**: 32
 - **In Progress**: 0
-- **Remaining**: 11
+- **Remaining**: 9
 
 ## Notes
 - Update checkboxes as tasks are completed
@@ -79,6 +80,17 @@
 - Integrated WebSocket server with existing Hono REST server
 - Created example clients demonstrating WebSocket usage
 - Full bidirectional communication for workflow monitoring and control
+
+## Recent Updates (CLI Tool Implementation - January 2, 2025)
+### FlowScript CLI Tool
+- Created comprehensive CLI tool for workflow management
+- **Commands implemented:**
+  - `flowscript run <workflow.json>` - Execute workflows with options for input data and watch mode
+  - `flowscript validate <workflow.json>` - Validate workflow syntax with verbose output
+  - `flowscript list` - List available workflows in a directory
+- Fixed TypeScript compilation issues across the codebase
+- Added proper error handling and user-friendly output formatting
+- Created example workflows: hello-world, data-processing, expense-approval
 
 ## Recent Updates (Node Library Enhancements - July 2, 2025)
 ### New Data Processing Nodes

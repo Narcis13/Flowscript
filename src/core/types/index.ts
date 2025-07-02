@@ -6,3 +6,4 @@ export * from './node';
 export * from './context';
 export * from './workflow';
 export * from './events';
+export * from './workflow-schema';

@@ -1,11 +1,10 @@
-import { EventEmitter } from 'events';
 import { ExecutionManager } from '../services/ExecutionManager';
 import { ConnectionManager } from './ConnectionManager';
 import { createMessage } from './protocol';
-import { WorkflowEvent } from '../../core/types';
+import { WorkflowEventData } from './types';
 
 export class EventBridge {
-  private eventHandlers: Map<string, (event: WorkflowEvent) => void> = new Map();
+  private eventHandlers: Map<string, (event: WorkflowEventData) => void> = new Map();
   private isRunning = false;
 
   constructor(
@@ -35,7 +34,7 @@ export class EventBridge {
     if (!runtime || !runtime.emitter) return;
 
     // Create a unique handler for this execution
-    const handler = (event: WorkflowEvent) => {
+    const handler = (event: WorkflowEventData) => {
       this.handleWorkflowEvent(executionId, event);
     };
 
@@ -72,7 +71,7 @@ export class EventBridge {
     });
   }
 
-  private handleWorkflowEvent(executionId: string, event: WorkflowEvent): void {
+  private handleWorkflowEvent(executionId: string, event: WorkflowEventData): void {
     if (!this.isRunning) return;
 
     // Transform the event into a WebSocket message
@@ -85,7 +84,7 @@ export class EventBridge {
     console.log(`Broadcasting event for execution ${executionId}:`, event.type);
   }
 
-  private transformEventToMessage(executionId: string, event: WorkflowEvent): any {
+  private transformEventToMessage(executionId: string, event: WorkflowEventData): any {
     switch (event.type) {
       case 'workflow_started':
         return createMessage('workflow_started', {
@@ -211,7 +210,7 @@ export class EventBridge {
     this.isRunning = false;
     
     // Clean up all event handlers
-    this.eventHandlers.forEach((handler, executionId) => {
+    this.eventHandlers.forEach((_, executionId) => {
       this.cleanupExecution(executionId);
     });
 

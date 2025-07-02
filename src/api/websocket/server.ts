@@ -11,7 +11,7 @@ export class FlowScriptWebSocketServer {
   private eventBridge: EventBridge;
 
   constructor(
-    private httpServer: Server,
+    httpServer: Server,
     private executionManager: ExecutionManager
   ) {
     this.wss = new WebSocketServer({ 
@@ -26,7 +26,7 @@ export class FlowScriptWebSocketServer {
   }
 
   private setupWebSocketServer(): void {
-    this.wss.on('connection', (ws: WebSocket, request) => {
+    this.wss.on('connection', (ws: WebSocket) => {
       const clientId = this.generateClientId();
       console.log(`New WebSocket connection: ${clientId}`);
 

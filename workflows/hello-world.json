@@ -1,0 +1,13 @@
+{
+  "id": "hello-world",
+  "name": "Hello World Example",
+  "initialState": {
+    "message": "Hello, FlowScript!"
+  },
+  "nodes": [
+    {"setData": {"path": "$.greeting", "value": "Welcome to FlowScript CLI"}},
+    {"logError": {"level": "info", "message": "Running Hello World workflow"}},
+    {"delay": {"seconds": 1}},
+    {"generateReport": {"format": "text", "template": "Greeting: {{greeting}}\nMessage: {{message}}"}}
+  ]
+}

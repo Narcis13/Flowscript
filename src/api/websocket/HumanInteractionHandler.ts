@@ -1,7 +1,6 @@
 import { ExecutionManager } from '../services/ExecutionManager';
 import { ConnectionManager } from './ConnectionManager';
 import { createMessage, HumanInteractionRequiredMessage, ResumeMessage } from './protocol';
-import { z } from 'zod';
 
 interface PendingInteraction {
   executionId: string;
@@ -178,7 +177,7 @@ export class HumanInteractionHandler {
   public getPendingInteractions(executionId: string): PendingInteraction[] {
     const interactions: PendingInteraction[] = [];
     
-    this.pendingInteractions.forEach((interaction, key) => {
+    this.pendingInteractions.forEach((interaction) => {
       if (interaction.executionId === executionId) {
         interactions.push(interaction);
       }
