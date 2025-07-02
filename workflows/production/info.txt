@@ -1,0 +1,14 @@
+Production Workflows
+====================
+
+This directory contains production-ready workflow definitions.
+
+Production workflows are:
+- Fully tested and validated
+- Documented with usage instructions
+- Version controlled with change history
+- Optimized for performance
+- Include error handling and recovery
+- Have monitoring and alerting configured
+
+IMPORTANT: Changes to production workflows should go through review and testing processes.

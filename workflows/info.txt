@@ -1,0 +1,12 @@
+Workflows Directory
+===================
+
+This directory contains all workflow definitions for the FlowScript orchestrator.
+
+Subdirectories:
+- examples/    - Sample workflows demonstrating various features
+- templates/   - Reusable workflow patterns and templates
+- test/        - Test workflows for development and validation
+- production/  - Production-ready workflow definitions
+
+Each workflow is defined as a JSON file following the FlowScript workflow schema.

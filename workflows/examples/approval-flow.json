@@ -1,0 +1,88 @@
+{
+  "id": "approval-flow",
+  "name": "Simple Approval Workflow",
+  "description": "Demonstrates branching based on approval decision",
+  "version": "1.0.0",
+  "initialState": {
+    "request": {
+      "id": null,
+      "amount": 0,
+      "description": "",
+      "requester": ""
+    },
+    "approved": false,
+    "approver": null,
+    "processedAt": null
+  },
+  "nodes": [
+    {
+      "validateData": {
+        "dataPath": "$.request",
+        "schema": {
+          "type": "object",
+          "required": ["id", "amount", "requester"]
+        }
+      }
+    },
+    [
+      {
+        "checkValue": {
+          "path": "$.request.amount",
+          "operator": "lessThan",
+          "value": 100
+        }
+      },
+      {
+        "low": {
+          "setData": {
+            "path": "$.approved",
+            "value": true
+          }
+        },
+        "high": [
+          {
+            "approveExpense": {
+              "expensePath": "$.request",
+              "timeout": 86400000
+            }
+          },
+          [
+            "approveExpense",
+            {
+              "approved": {
+                "setData": {
+                  "path": "$.approved",
+                  "value": true
+                }
+              },
+              "rejected": {
+                "setData": {
+                  "path": "$.approved",
+                  "value": false
+                }
+              }
+            }
+          ]
+        ]
+      }
+    ],
+    {
+      "setData": {
+        "path": "$.processedAt",
+        "value": "{{now}}"
+      }
+    },
+    {
+      "generateReport": {
+        "reportType": "summary",
+        "format": "json",
+        "outputPath": "approvalReport"
+      }
+    }
+  ],
+  "metadata": {
+    "author": "FlowScript Team",
+    "created": "2025-07-02T18:00:00Z",
+    "tags": ["example", "approval", "branching", "human-in-the-loop"]
+  }
+}

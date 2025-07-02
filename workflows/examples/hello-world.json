@@ -1,0 +1,40 @@
+{
+  "id": "hello-world",
+  "name": "Hello World Workflow",
+  "description": "A simple workflow that demonstrates basic sequential execution",
+  "version": "1.0.0",
+  "initialState": {
+    "message": "Hello",
+    "counter": 0
+  },
+  "nodes": [
+    {
+      "setData": {
+        "path": "$.message",
+        "value": "Hello, FlowScript!"
+      }
+    },
+    {
+      "incrementCounter": {
+        "counterPath": "counter",
+        "incrementBy": 1
+      }
+    },
+    {
+      "delay": {
+        "ms": 1000
+      }
+    },
+    {
+      "setData": {
+        "path": "$.completedAt",
+        "value": "{{now}}"
+      }
+    }
+  ],
+  "metadata": {
+    "author": "FlowScript Team",
+    "created": "2025-07-02T18:00:00Z",
+    "tags": ["example", "beginner", "sequential"]
+  }
+}

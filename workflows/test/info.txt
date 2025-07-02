@@ -1,0 +1,14 @@
+Test Workflows
+==============
+
+This directory contains workflows used for testing and development.
+
+Test workflows include:
+- Unit test workflows for individual nodes
+- Integration test workflows for complex scenarios
+- Performance test workflows
+- Edge case and error condition tests
+- Regression test workflows
+- Load testing workflows
+
+These workflows are used by the test suite and during development to ensure system reliability.

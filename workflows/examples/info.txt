@@ -1,0 +1,15 @@
+Example Workflows
+=================
+
+This directory contains example workflows that demonstrate various FlowScript features.
+
+Examples include:
+- Basic sequential workflows
+- Branching and conditional logic
+- Loops and iterations
+- Human-in-the-loop interactions
+- Data processing pipelines
+- Error handling patterns
+- Integration with external services
+
+These workflows serve as learning resources and can be used as starting points for custom workflows.

@@ -35,7 +35,7 @@ if (require.main === module) {
   console.log(`FlowScript v${VERSION} - Starting API Server...`);
   
   // Load environment variables
-  const port = parseInt(process.env.PORT || '3000', 10);
+  const port = parseInt(process.env.PORT || '3013', 10);
   
   // Import and start full server (REST + WebSocket)
   import('./api/server').then(({ startFullServer }) => {

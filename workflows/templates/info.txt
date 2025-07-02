@@ -1,0 +1,15 @@
+Workflow Templates
+==================
+
+This directory contains reusable workflow templates for common patterns.
+
+Templates include:
+- Approval workflows (single/multi-level)
+- ETL (Extract, Transform, Load) pipelines
+- Retry patterns with exponential backoff
+- Parallel processing workflows
+- Notification chains
+- Data validation pipelines
+- State machine patterns
+
+Templates can be customized by modifying configuration parameters and node settings.
