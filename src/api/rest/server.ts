@@ -110,7 +110,7 @@ export function createApp(): Hono {
 /**
  * Start the server
  */
-export async function startServer(port: number = 3000): Promise<void> {
+export async function startServer(port: number = 3000): Promise<{ app: Hono; server: any }> {
   // Initialize services
   const storage = WorkflowStorage.getInstance();
   storage.loadExampleWorkflows();
@@ -120,11 +120,14 @@ export async function startServer(port: number = 3000): Promise<void> {
   
   console.log(`FlowScript API Server starting on port ${port}...`);
   console.log(`Server running at http://localhost:${port}`);
+  console.log(`WebSocket endpoint: ws://localhost:${port}/ws`);
   
   // For Hono with Node.js adapter
   const { serve } = await import('@hono/node-server');
-  serve({
+  const server = serve({
     fetch: app.fetch,
     port
   });
+
+  return { app, server };
 }

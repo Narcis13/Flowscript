@@ -14,6 +14,7 @@ export * from './api';
 
 // Convenience function to start the API server
 export { startServer as startAPIServer } from './api/rest/server';
+export { startFullServer } from './api/server';
 
 // Export main types for users
 export type { 
@@ -36,9 +37,9 @@ if (require.main === module) {
   // Load environment variables
   const port = parseInt(process.env.PORT || '3000', 10);
   
-  // Import and start server
-  import('./api/rest/server').then(({ startServer }) => {
-    startServer(port).catch(error => {
+  // Import and start full server (REST + WebSocket)
+  import('./api/server').then(({ startFullServer }) => {
+    startFullServer(port).catch(error => {
       console.error('Failed to start server:', error);
       process.exit(1);
     });

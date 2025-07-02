@@ -51,7 +51,7 @@ interface ExecutionEntry {
 /**
  * Manages workflow executions
  */
-export class ExecutionManager {
+export class ExecutionManager extends EventEmitter {
   private executions: Map<string, ExecutionEntry> = new Map();
   private static instance: ExecutionManager;
 
@@ -99,6 +99,9 @@ export class ExecutionManager {
 
     // Start execution asynchronously
     this.executeWorkflow(executionId, initialInput);
+
+    // Emit event for new execution
+    this.emit('execution_started', executionId);
 
     return executionId;
   }
@@ -162,6 +165,18 @@ export class ExecutionManager {
    */
   getAllExecutions(): ExecutionMetadata[] {
     return Array.from(this.executions.values()).map(entry => ({ ...entry.metadata }));
+  }
+
+  /**
+   * Get runtime context for an execution
+   */
+  getRuntime(executionId: string): { emitter: EventEmitter } | null {
+    const entry = this.executions.get(executionId);
+    if (!entry) return null;
+    
+    return {
+      emitter: entry.eventEmitter
+    };
   }
 
   /**
