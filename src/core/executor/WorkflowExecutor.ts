@@ -7,14 +7,15 @@ import { EventEmitter } from 'events';
 import { 
   WorkflowDefinition, 
   FlowElement, 
-  BranchElement, 
-  LoopElement
+  BranchMap,
+  LoopController
 } from '../types/workflow';
 import { Node } from '../types/node';
 import { ExecutionContext } from '../types/context';
 import { StateManager } from '../state';
 import { RuntimeContextImpl } from '../runtime';
 import { WorkflowEvent } from '../types/events';
+import { getNodeRegistry } from '../../nodes/registry';
 
 /**
  * Execution result from running a flow
@@ -45,10 +46,18 @@ export class WorkflowExecutor {
   private eventEmitter: EventEmitter;
   private executionStartTime: number = 0;
   private timeout: number = 60000; // Default 1 minute timeout
+  private runtimeContext?: RuntimeContextImpl; // For testing purposes
 
   constructor(private workflow: WorkflowDefinition, options?: ExecutionOptions) {
     this.eventEmitter = options?.eventEmitter || new EventEmitter();
     this.timeout = options?.timeout || 60000;
+  }
+
+  /**
+   * Get runtime context (for testing purposes)
+   */
+  getRuntimeContext(): RuntimeContextImpl | undefined {
+    return this.runtimeContext;
   }
 
   /**
@@ -70,6 +79,9 @@ export class WorkflowExecutor {
       executionId,
       this.eventEmitter
     );
+    
+    // Store for testing access
+    this.runtimeContext = runtimeContext;
 
     // Emit workflow started event
     runtimeContext.emit({
@@ -81,9 +93,9 @@ export class WorkflowExecutor {
     });
 
     try {
-      // Execute the workflow elements
+      // Execute the workflow nodes
       const result = await this.executeFlow(
-        this.workflow.elements,
+        this.workflow.nodes,
         stateManager,
         runtimeContext
       );
@@ -123,8 +135,11 @@ export class WorkflowExecutor {
         error: error instanceof Error ? error : new Error(String(error))
       };
     } finally {
-      // Clean up any remaining pause tokens
-      runtimeContext.clearPauseTokens();
+      // Clean up any remaining pause tokens only if not paused
+      // This allows tests to resume execution
+      if (!runtimeContext.isPaused()) {
+        runtimeContext.clearPauseTokens();
+      }
     }
   }
 
@@ -148,18 +163,22 @@ export class WorkflowExecutor {
       const element = elements[pc];
 
       // Handle different element types
-      if (this.isBranchElement(element)) {
-        const result = await this.executeBranch(element, state, runtime);
+      if (this.isBranchStructure(element)) {
+        const [condition, branches] = element;
+        const result = await this.executeBranch(condition, branches, state, runtime);
         if (result.exitSignal) {
           exitSignal = result.exitSignal;
         }
-      } else if (this.isLoopElement(element)) {
-        const result = await this.executeLoop(element, state, runtime);
+      } else if (this.isLoopStructure(element)) {
+        const [controller, body] = element;
+        const result = await this.executeLoop(controller, body, state, runtime);
         if (result.exitSignal) {
           exitSignal = result.exitSignal;
         }
-      } else if (this.isNode(element)) {
-        const result = await this.executeNode(element, state, runtime);
+      } else {
+        // It's a node reference - resolve and execute it
+        const node = await this.resolveNode(element);
+        const result = await this.executeNode(node, state, runtime);
         
         // Handle special edges
         if (result.edge === 'exit') {
@@ -173,8 +192,6 @@ export class WorkflowExecutor {
             throw new Error(`Target node not found: ${targetName}`);
           }
         }
-      } else {
-        throw new Error(`Unknown element type at index ${pc}`);
       }
 
       pc++;
@@ -191,19 +208,27 @@ export class WorkflowExecutor {
    * Execute a branch structure
    */
   private async executeBranch(
-    branch: BranchElement,
+    condition: FlowElement,
+    branches: BranchMap,
     state: StateManager,
     runtime: RuntimeContextImpl
   ): Promise<ExecutionResult> {
-    // Execute condition node
-    const conditionResult = await this.executeNode(branch.condition, state, runtime);
+    // Resolve and execute condition node
+    const conditionNode = await this.resolveNode(condition);
+    const conditionResult = await this.executeNode(conditionNode, state, runtime);
     
     // Find matching branch
-    const selectedBranch = branch.branches[conditionResult.edge || 'default'];
+    const selectedBranch = branches[conditionResult.edge || 'default'];
     
     if (selectedBranch) {
+      // Handle null branches
+      if (selectedBranch === null) {
+        return { completed: true, state: state.getState() };
+      }
+      // Convert single element to array if needed
+      const branchElements = Array.isArray(selectedBranch) ? selectedBranch : [selectedBranch];
       // Execute the selected branch
-      return this.executeFlow(selectedBranch, state, runtime);
+      return this.executeFlow(branchElements as FlowElement[], state, runtime);
     }
 
     // No matching branch found
@@ -214,15 +239,17 @@ export class WorkflowExecutor {
    * Execute a loop structure
    */
   private async executeLoop(
-    loop: LoopElement,
+    controller: LoopController,
+    body: FlowElement[],
     state: StateManager,
     runtime: RuntimeContextImpl
   ): Promise<ExecutionResult> {
     let exitSignal: string | undefined;
 
     while (!exitSignal) {
-      // Execute loop controller
-      const controlResult = await this.executeNode(loop.controller, state, runtime);
+      // Resolve and execute loop controller
+      const controllerNode = await this.resolveNode(controller);
+      const controlResult = await this.executeNode(controllerNode, state, runtime);
       
       if (controlResult.edge === 'exit_loop') {
         break;
@@ -233,7 +260,7 @@ export class WorkflowExecutor {
         }
         
         // Execute loop body
-        const bodyResult = await this.executeFlow(loop.body, state, runtime);
+        const bodyResult = await this.executeFlow(body, state, runtime);
         if (bodyResult.exitSignal) {
           exitSignal = bodyResult.exitSignal;
         }
@@ -334,12 +361,52 @@ export class WorkflowExecutor {
   }
 
   /**
+   * Resolve a flow element to a Node instance
+   */
+  private async resolveNode(element: FlowElement): Promise<Node> {
+    const registry = getNodeRegistry();
+    
+    if (this.isNodeReference(element)) {
+      // Simple string reference
+      const node = registry.create(element);
+      if (!node) {
+        throw new Error(`Node not found in registry: ${element}`);
+      }
+      return node;
+    } else if (this.isNodeWithConfig(element)) {
+      // Node with configuration
+      const nodeName = Object.keys(element)[0];
+      const config = element[nodeName];
+      const node = registry.create(nodeName);
+      if (!node) {
+        throw new Error(`Node not found in registry: ${nodeName}`);
+      }
+      // Create a wrapper node that includes the config
+      return {
+        ...node,
+        execute: async (context: ExecutionContext) => {
+          // Merge config into context
+          const enhancedContext = {
+            ...context,
+            config: { ...context.config, ...config }
+          };
+          return node.execute(enhancedContext);
+        }
+      };
+    } else {
+      throw new Error(`Cannot resolve element to node: ${JSON.stringify(element)}`);
+    }
+  }
+
+  /**
    * Find the index of a node by name in the elements array
    */
   private findNodeIndex(elements: FlowElement[], nodeName: string): number {
     for (let i = 0; i < elements.length; i++) {
       const element = elements[i];
-      if (this.isNode(element) && element.metadata.name === nodeName) {
+      if (this.isNodeReference(element) && element === nodeName) {
+        return i;
+      } else if (this.isNodeWithConfig(element) && Object.keys(element)[0] === nodeName) {
         return i;
       }
     }
@@ -347,24 +414,38 @@ export class WorkflowExecutor {
   }
 
   /**
-   * Type guard for Node
+   * Type guard for branch structure (array with 2 elements where second is BranchMap)
    */
-  private isNode(element: FlowElement): element is Node {
-    return 'metadata' in element && 'execute' in element;
+  private isBranchStructure(element: FlowElement): element is [FlowElement, BranchMap] {
+    return Array.isArray(element) && 
+           element.length === 2 && 
+           typeof element[1] === 'object' &&
+           !Array.isArray(element[1]);
   }
 
   /**
-   * Type guard for BranchElement
+   * Type guard for loop structure (array with 2 elements where second is array)
    */
-  private isBranchElement(element: FlowElement): element is BranchElement {
-    return 'type' in element && element.type === 'branch';
+  private isLoopStructure(element: FlowElement): element is [LoopController, FlowElement[]] {
+    return Array.isArray(element) && 
+           element.length === 2 && 
+           Array.isArray(element[1]);
   }
 
   /**
-   * Type guard for LoopElement
+   * Type guard for string node reference
    */
-  private isLoopElement(element: FlowElement): element is LoopElement {
-    return 'type' in element && element.type === 'loop';
+  private isNodeReference(element: FlowElement): element is string {
+    return typeof element === 'string';
+  }
+
+  /**
+   * Type guard for node with config
+   */
+  private isNodeWithConfig(element: FlowElement): element is { [nodeName: string]: Record<string, any> } {
+    if (typeof element !== 'object' || Array.isArray(element)) return false;
+    const keys = Object.keys(element);
+    return keys.length === 1 && typeof element[keys[0]] === 'object';
   }
 }
 

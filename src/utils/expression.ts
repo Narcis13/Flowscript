@@ -25,10 +25,6 @@ export function evaluateExpression(expression: string, state: StateManager): any
     // Create a safe evaluation context
     const context = {
       state: createStateProxy(state),
-      true: true,
-      false: false,
-      null: null,
-      undefined: undefined,
       // Add safe math functions
       Math: Math,
       Date: Date,
@@ -66,12 +62,12 @@ function createStateProxy(state: StateManager): any {
           return state.getState();
         }
         
-        // For other properties, get from state
-        const value = state.get(prop);
+        // For other properties, get from state using JSONPath
+        const value = state.get(`$.${prop}`);
         
         // If value is an object, wrap it in a proxy for nested access
         if (value && typeof value === 'object' && !Array.isArray(value)) {
-          return createNestedProxy(value, prop, state);
+          return createNestedProxy(value, `$.${prop}`, state);
         }
         
         return value;
@@ -91,7 +87,8 @@ function createNestedProxy(obj: any, basePath: string, state: StateManager): any
   return new Proxy(obj, {
     get(target, prop) {
       if (typeof prop === 'string') {
-        const path = `${basePath}.${prop}`;
+        // If basePath already starts with $, don't add it again
+        const path = basePath.startsWith('$') ? `${basePath}.${prop}` : `$.${basePath}.${prop}`;
         const value = state.get(path);
         
         // Continue proxying nested objects

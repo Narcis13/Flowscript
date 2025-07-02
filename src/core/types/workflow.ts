@@ -2,40 +2,28 @@
  * Workflow-related type definitions
  */
 
-import { Node } from './node';
-
 /**
- * Types of flow elements
+ * Types of flow elements according to specification
  */
 export type FlowElement = 
-  | Node
-  | BranchElement
-  | LoopElement;
+  | string                                      // Simple node reference: "nodeName"
+  | { [nodeName: string]: Record<string, any> } // Node with config: {"nodeName": {config}}
+  | [FlowElement, BranchMap]                   // Branch structure: [condition, branches]
+  | [LoopController, FlowElement[]];            // Loop structure: [controller, body]
 
 /**
- * Branch control structure
- */
-export interface BranchElement {
-  type: 'branch';
-  condition: Node;
-  branches: BranchMap;
-}
-
-/**
- * Map of edge names to node sequences
+ * Map of edge names to flow elements or arrays of flow elements
  */
 export interface BranchMap {
-  [edgeName: string]: FlowElement[];
+  [edgeName: string]: FlowElement | FlowElement[] | null;
 }
 
 /**
- * Loop control structure
+ * Loop controller can be a string or node with config
  */
-export interface LoopElement {
-  type: 'loop';
-  controller: Node;
-  body: FlowElement[];
-}
+export type LoopController = 
+  | string                                      // Loop controller node name
+  | { [nodeName: string]: Record<string, any> }; // Loop controller with config
 
 /**
  * Workflow definition
@@ -50,8 +38,8 @@ export interface WorkflowDefinition {
   /** Initial state */
   initialState: Record<string, any>;
   
-  /** Array of flow elements */
-  elements: FlowElement[];
+  /** Array of flow elements (nodes) */
+  nodes: FlowElement[];
   
   /** Workflow metadata */
   metadata?: Record<string, any>;

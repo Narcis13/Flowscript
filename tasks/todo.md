@@ -32,10 +32,10 @@
 - [x] Create HITL pause/resume mechanism
 
 ## Phase 6: API Layer
-- [ ] Set up Hono REST API server structure
-- [ ] Implement POST /workflows/:workflowId/execute endpoint
-- [ ] Implement POST /executions/:executionId/resume endpoint
-- [ ] Implement GET /executions/:executionId/status endpoint
+- [x] Set up Hono REST API server structure
+- [x] Implement POST /workflows/:workflowId/execute endpoint
+- [x] Implement POST /executions/:executionId/resume endpoint
+- [x] Implement GET /executions/:executionId/status endpoint
 
 ## Phase 7: WebSocket Layer
 - [ ] Set up WebSocket server with ws library
@@ -43,7 +43,7 @@
 - [ ] Create WebSocket event broadcasting for HITL notifications
 
 ## Phase 8: Execution Management
-- [ ] Build execution manager to track running workflows
+- [x] Build execution manager to track running workflows
 
 ## Phase 9: Quality & Tooling
 - [ ] Implement workflow definition validation
@@ -61,9 +61,9 @@
 
 ## Progress Tracking
 - **Total Tasks**: 40
-- **Completed**: 21
+- **Completed**: 26
 - **In Progress**: 0
-- **Remaining**: 19
+- **Remaining**: 14
 
 ## Notes
 - Update checkboxes as tasks are completed

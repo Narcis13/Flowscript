@@ -139,6 +139,7 @@ export class RuntimeContextImpl implements RuntimeContext {
     }
 
     token.resume(data);
+    this.pauseTokens.delete(tokenId);
   }
 
   /**

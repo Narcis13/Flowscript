@@ -159,9 +159,11 @@ describe('RuntimeContext', () => {
       runtime.setCurrentNode('test-node');
       const token = runtime.pause();
 
+      // Cancel and handle the rejection properly
+      const promise = runtime.waitForResume(token);
       runtime.cancel(token.id);
 
-      await expect(runtime.waitForResume(token)).rejects.toThrow('Execution cancelled');
+      await expect(promise).rejects.toThrow('Execution cancelled');
       expect(runtime.isPaused()).toBe(false);
     });
 
@@ -171,18 +173,24 @@ describe('RuntimeContext', () => {
   });
 
   describe('clearPauseTokens', () => {
-    it('should cancel all active tokens', () => {
+    it('should cancel all active tokens', async () => {
       runtime.setCurrentNode('node1');
       const token1 = runtime.pause();
+      const promise1 = runtime.waitForResume(token1);
 
       runtime.setCurrentNode('node2');
       const token2 = runtime.pause();
+      const promise2 = runtime.waitForResume(token2);
 
       runtime.clearPauseTokens();
 
       expect(runtime.isPaused()).toBe(false);
       expect(token1.isResolved).toBe(true);
       expect(token2.isResolved).toBe(true);
+      
+      // Ensure both promises reject properly
+      await expect(promise1).rejects.toThrow('Execution cancelled');
+      await expect(promise2).rejects.toThrow('Execution cancelled');
     });
   });
 });

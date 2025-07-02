@@ -47,7 +47,7 @@ export abstract class BaseHumanNode implements Node {
   /**
    * Optional: Validate the input before processing
    */
-  validateInput(input: any, context: ExecutionContext): boolean {
+  validateInput(_input: any, _context: ExecutionContext): boolean {
     return true;
   }
   

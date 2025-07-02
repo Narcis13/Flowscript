@@ -43,11 +43,11 @@ class TestHumanNode extends BaseHumanNode {
     };
   }
   
-  processInput(input: any, context: ExecutionContext): string {
+  processInput(input: any, _context: ExecutionContext): string {
     return input.answer;
   }
   
-  validateInput(input: any, context: ExecutionContext): boolean {
+  validateInput(input: any, _context: ExecutionContext): boolean {
     return input && ['yes', 'no'].includes(input.answer);
   }
 }

@@ -6,11 +6,13 @@
  * Represents a pause token for workflow execution
  */
 export class PauseToken {
+  private static _counter = 0;
   private _resolved: boolean = false;
   private _resolvePromise?: (value: any) => void;
   private _rejectPromise?: (reason: any) => void;
   private _promise: Promise<any>;
   private _resumeData?: any;
+  private _uniqueId: string;
 
   constructor(
     public readonly workflowId: string,
@@ -23,13 +25,16 @@ export class PauseToken {
       this._resolvePromise = resolve;
       this._rejectPromise = reject;
     });
+    
+    // Generate unique ID with counter
+    this._uniqueId = `${this.executionId}-${this.nodeId}-${this.timestamp}-${++PauseToken._counter}`;
   }
 
   /**
    * Get the unique identifier for this pause token
    */
   get id(): string {
-    return `${this.executionId}-${this.nodeId}-${this.timestamp}`;
+    return this._uniqueId;
   }
 
   /**

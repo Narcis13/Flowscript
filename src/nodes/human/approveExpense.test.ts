@@ -57,7 +57,7 @@ describe('ApproveExpenseNode', () => {
     
     it('should be registered in node registry', () => {
       const registry = getNodeRegistry();
-      expect(registry.hasNode('approveExpense')).toBe(true);
+      expect(registry.has('approveExpense')).toBe(true);
     });
   });
   

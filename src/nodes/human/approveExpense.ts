@@ -29,7 +29,6 @@ export class ApproveExpenseNode extends BaseHumanNode {
   
   getConfig(context: ExecutionContext): HumanNodeConfig {
     // Get expense data from state
-    const expense = context.state.get('currentExpense') || {};
     const requester = context.state.get('requester') || {};
     
     return {
@@ -103,7 +102,7 @@ export class ApproveExpenseNode extends BaseHumanNode {
     return input.decision || 'error';
   }
   
-  validateInput(input: any, context: ExecutionContext): boolean {
+  validateInput(input: any, _context: ExecutionContext): boolean {
     // Ensure we have a decision
     if (!input || !input.decision) {
       return false;
