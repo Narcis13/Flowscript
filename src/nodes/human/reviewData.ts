@@ -198,3 +198,6 @@ export class ReviewDataNode extends BaseHumanNode {
       .trim();
   }
 }
+
+// Export the node instance for direct use
+export const reviewData = new ReviewDataNode();

@@ -97,3 +97,6 @@ export class FormInputNode extends BaseHumanNode {
     return context.state.getState();
   }
 }
+
+// Export the node instance for direct use
+export const formInput = new FormInputNode();

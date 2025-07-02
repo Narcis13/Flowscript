@@ -149,3 +149,6 @@ export class ApproveExpenseNode extends BaseHumanNode {
     };
   }
 }
+
+// Export the node instance for direct use
+export const approveExpense = new ApproveExpenseNode();
