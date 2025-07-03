@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { interpolateObject } from '../../utils/template';
 import { 
   WorkflowDefinition, 
   FlowElement, 
@@ -385,10 +386,13 @@ export class WorkflowExecutor {
       return {
         ...node,
         execute: async (context: ExecutionContext) => {
+          // Interpolate template variables in config using current state
+          const interpolatedConfig = interpolateObject(config, context.state.getState());
+          
           // Merge config into context
           const enhancedContext = {
             ...context,
-            config: { ...context.config, ...config }
+            config: { ...context.config, ...interpolatedConfig }
           };
           return node.execute(enhancedContext);
         }

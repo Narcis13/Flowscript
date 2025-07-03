@@ -119,3 +119,14 @@
 - **Total Control Nodes**: 2
 - **Total Human Nodes**: 3
 - **New Nodes Added**: 9
+
+## Recent Updates (API and Workflow Execution Fixes - July 3, 2025)
+### Critical Fixes for Workflow Execution
+- **Fixed Node Registration in API Server**: Added `registerAllNodes()` call in server startup to ensure nodes are available when executing workflows via REST API
+- **Fixed Template Variable Resolution**: Added template interpolation in WorkflowExecutor.resolveNode() method to properly resolve variables like {{currentDoc}} from workflow state
+- **Import Path Fix**: Added missing import for interpolateObject utility in WorkflowExecutor
+- **Workflow Execution Improvements**:
+  - Nodes now properly execute within loops
+  - Template variables correctly resolve from state context
+  - Counter increments work as expected
+  - Debug logs show actual values instead of template placeholders

@@ -5,8 +5,12 @@
 import { createServer } from 'http';
 import { FlowScriptWebSocketServer } from './websocket';
 import { ExecutionManager, WorkflowStorage } from './services';
+import { registerAllNodes } from '../nodes/registerAll';
 
 export async function startFullServer(port: number = 3000): Promise<void> {
+  // Register all nodes before starting the server
+  registerAllNodes();
+  
   // Initialize services
   const storage = WorkflowStorage.getInstance();
   storage.loadExampleWorkflows();
