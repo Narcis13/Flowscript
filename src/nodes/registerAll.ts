@@ -19,6 +19,7 @@ import { sendNotifications } from './actions/sendNotifications';
 import { incrementCounter } from './actions/incrementCounter';
 import { setFlag } from './actions/setFlag';
 import { logError } from './actions/logError';
+import { initializeGame, checkGuess, displayResults } from './actions/gameLogic';
 
 // Import all control nodes
 import { whileCondition } from './controls/whileCondition';
@@ -53,6 +54,9 @@ export function registerAllNodes(): void {
   registry.registerInstance(incrementCounter);
   registry.registerInstance(setFlag);
   registry.registerInstance(logError);
+  registry.registerInstance(initializeGame);
+  registry.registerInstance(checkGuess);
+  registry.registerInstance(displayResults);
   
   // Register control nodes
   registry.registerInstance(whileCondition);

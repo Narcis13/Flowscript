@@ -177,8 +177,12 @@ FlowScript has a solid foundation with a well-architected core engine. The synta
 
 Total estimated time to production-ready: 4.5-6.5 days of development work.
 
-### Recent Updates (July 2, 2025)
+### Recent Updates (January 4, 2025)
 - **Fixed expression evaluation**: Resolved issues with state proxy in expression evaluator
 - **Aligned with specification**: Refactored entire codebase to use array-based syntax for branches and loops
 - **Fixed test suite**: All unit tests passing (113 passed, 4 skipped)
 - **Updated documentation**: Project status reflects current state accurately
+- **Added Interactive CLI Mode**: Implemented `run-interactive` command for HITL testing
+- **Fixed Template Interpolation**: Enhanced template substitution for dynamic form content
+- **Created Game Logic Nodes**: Added custom nodes for interactive game workflows
+- **Simplified Workflow Structure**: Created cleaner workflow patterns for HITL scenarios

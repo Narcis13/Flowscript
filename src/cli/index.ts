@@ -2,6 +2,7 @@
 
 import { Command } from 'commander';
 import { runCommand } from './commands/run';
+import { runInteractiveCommand } from './commands/runInteractive';
 import { validateCommand } from './commands/validate';
 import { listCommand } from './commands/list';
 
@@ -18,6 +19,14 @@ program
   .option('-i, --input <data>', 'Initial input data (JSON string)')
   .option('-w, --watch', 'Watch for human interactions')
   .action(runCommand);
+
+program
+  .command('run-interactive <workflow>')
+  .description('Execute a workflow with interactive human-in-the-loop support')
+  .option('-i, --input <data>', 'Initial input data (JSON string)')
+  .option('-p, --port <port>', 'API server port for resume operations', parseInt)
+  .option('-t, --timeout <ms>', 'Overall workflow timeout in milliseconds', parseInt)
+  .action(runInteractiveCommand);
 
 program
   .command('validate <workflow>')

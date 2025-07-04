@@ -1,0 +1,32 @@
+{
+  "id": "test-loop",
+  "name": "Test Loop",
+  "description": "Testing loop structure",
+  "version": "1.0.0",
+  "initialState": {
+    "counter": 0,
+    "done": false
+  },
+  "nodes": [
+    {
+      "setData": {
+        "path": "$.counter",
+        "value": 0
+      }
+    },
+    [
+      {
+        "whileCondition": {
+          "condition": "state.counter < 3"
+        }
+      },
+      [
+        {
+          "incrementCounter": {
+            "field": "counter"
+          }
+        }
+      ]
+    ]
+  ]
+}

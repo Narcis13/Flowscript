@@ -1,0 +1,146 @@
+{
+  "id": "guess-number-game-v2",
+  "name": "Guess the Number Game V2",
+  "description": "Fixed interactive number guessing game",
+  "version": "2.0.0",
+  "initialState": {
+    "game": null,
+    "currentGuess": null,
+    "message": "",
+    "results": null,
+    "userInput": null
+  },
+  "nodes": [
+    {
+      "initializeGame": {
+        "min": 1,
+        "max": 100,
+        "maxAttempts": 7
+      }
+    },
+    [
+      {
+        "whileCondition": {
+          "condition": "!state.game.gameOver"
+        }
+      },
+      [
+        [
+          {
+            "formInput": {
+              "form": {
+                "title": "Guess the Number!",
+                "description": "{{state.message}}",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "guess": {
+                      "type": "integer",
+                      "title": "Your Guess",
+                      "minimum": 1,
+                      "maximum": 100,
+                      "description": "Enter a number between {{state.game.min}} and {{state.game.max}}"
+                    }
+                  },
+                  "required": ["guess"]
+                },
+                "submitLabel": "Submit Guess",
+                "cancelLabel": "Give Up"
+              },
+              "stateKey": "userInput",
+              "timeout": 300000
+            }
+          },
+          {
+            "submitted": [
+              {
+                "setData": {
+                  "path": "$.currentGuess",
+                  "valuePath": "$.userInput.guess"
+                }
+              },
+              "checkGuess"
+            ],
+            "cancelled": [
+              {
+                "setData": {
+                  "path": "$.game.gameOver",
+                  "value": true
+                }
+              },
+              {
+                "setData": {
+                  "path": "$.message",
+                  "value": "You gave up!"
+                }
+              }
+            ],
+            "timeout": [
+              {
+                "setData": {
+                  "path": "$.game.gameOver",
+                  "value": true
+                }
+              },
+              {
+                "setData": {
+                  "path": "$.message",
+                  "value": "Time's up!"
+                }
+              }
+            ]
+          }
+        ]
+      ]
+    ],
+    "displayResults",
+    [
+      {
+        "formInput": {
+          "form": {
+            "title": "Game Over!",
+            "description": "{{state.summary}}\n\nWould you like to play again?",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "playAgain": {
+                  "type": "boolean",
+                  "title": "Play Again",
+                  "default": false
+                }
+              }
+            },
+            "submitLabel": "Submit"
+          },
+          "stateKey": "finalChoice",
+          "timeout": 60000
+        }
+      },
+      {
+        "submitted": [
+          {
+            "checkValue": {
+              "path": "$.finalChoice.playAgain",
+              "operator": "equals",
+              "value": true
+            }
+          },
+          {
+            "true": "loopTo:initializeGame",
+            "false": {
+              "setData": {
+                "path": "$.finalMessage",
+                "value": "Thanks for playing! 👋"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  ],
+  "metadata": {
+    "author": "FlowScript Team",
+    "created": "2025-01-04T10:00:00Z",
+    "tags": ["game", "interactive", "human-in-the-loop", "test"]
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "id": "guess-number-game",
+  "name": "Guess the Number Game",
+  "description": "An interactive number guessing game demonstrating human-in-the-loop functionality",
+  "version": "1.0.0",
+  "initialState": {
+    "game": null,
+    "currentGuess": null,
+    "message": "",
+    "results": null
+  },
+  "nodes": [
+    {
+      "initializeGame": {
+        "min": 1,
+        "max": 100,
+        "maxAttempts": 7
+      }
+    },
+    [
+      {
+        "whileCondition": {
+          "condition": "!state.game.gameOver"
+        }
+      },
+      [
+        {
+          "formInput": {
+            "form": {
+              "title": "Guess the Number!",
+              "description": "{{state.message}}",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guess": {
+                    "type": "integer",
+                    "title": "Your Guess",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Enter a number between {{state.game.min}} and {{state.game.max}}"
+                  }
+                },
+                "required": ["guess"]
+              },
+              "submitLabel": "Submit Guess",
+              "cancelLabel": "Give Up"
+            },
+            "stateKey": "lastInput",
+            "timeout": 300000
+          }
+        },
+        [
+          "formInput",
+          {
+            "submitted": [
+              {
+                "setData": {
+                  "path": "$.currentGuess",
+                  "value": "{{state.lastInput.guess}}"
+                }
+              },
+              "checkGuess"
+            ],
+            "cancelled": [
+              {
+                "setData": {
+                  "path": "$.game.gameOver",
+                  "value": true
+                }
+              },
+              {
+                "setData": {
+                  "path": "$.message",
+                  "value": "You gave up! The number was {{state.game.secretNumber}}."
+                }
+              }
+            ],
+            "timeout": [
+              {
+                "setData": {
+                  "path": "$.game.gameOver",
+                  "value": true
+                }
+              },
+              {
+                "setData": {
+                  "path": "$.message",
+                  "value": "Time's up! The number was {{state.game.secretNumber}}."
+                }
+              }
+            ]
+          }
+        ]
+      ]
+    ],
+    "displayResults",
+    {
+      "formInput": {
+        "form": {
+          "title": "Game Over!",
+          "description": "{{state.summary}}\n\nWould you like to play again?",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "playAgain": {
+                "type": "boolean",
+                "title": "Play Again",
+                "default": false
+              }
+            }
+          },
+          "submitLabel": "Submit"
+        },
+        "stateKey": "finalChoice",
+        "timeout": 60000
+      }
+    },
+    [
+      "formInput",
+      {
+        "submitted": [
+          {
+            "checkValue": {
+              "path": "$.finalChoice.playAgain",
+              "operator": "equals",
+              "value": true
+            }
+          },
+          {
+            "true": "loopTo:initializeGame",
+            "false": {
+              "setData": {
+                "path": "$.finalMessage",
+                "value": "Thanks for playing! 👋"
+              }
+            }
+          }
+        ],
+        "cancelled": {
+          "setData": {
+            "path": "$.finalMessage",
+            "value": "Thanks for playing! 👋"
+          }
+        },
+        "timeout": {
+          "setData": {
+            "path": "$.finalMessage",
+            "value": "Thanks for playing! 👋"
+          }
+        }
+      }
+    ]
+  ],
+  "metadata": {
+    "author": "FlowScript Team",
+    "created": "2025-01-04T10:00:00Z",
+    "tags": ["game", "interactive", "human-in-the-loop", "test"]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "basic-test",
+  "name": "Basic Test",
+  "description": "Minimal workflow for testing",
+  "version": "1.0.0",
+  "initialState": {
+    "value": 10
+  },
+  "nodes": [
+    {
+      "setData": {
+        "path": "$.value",
+        "value": 20
+      }
+    }
+  ]
+}

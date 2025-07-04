@@ -1,0 +1,61 @@
+{
+  "id": "guess-number-simple",
+  "name": "Simple Guess the Number",
+  "description": "Simplified number guessing game",
+  "version": "1.0.0",
+  "initialState": {
+    "game": null,
+    "message": "",
+    "results": null
+  },
+  "nodes": [
+    {
+      "initializeGame": {
+        "min": 1,
+        "max": 100,
+        "maxAttempts": 7
+      }
+    },
+    [
+      {
+        "whileCondition": {
+          "condition": "!state.game.gameOver"
+        }
+      },
+      [
+        {
+          "formInput": {
+            "form": {
+              "title": "Guess the Number!",
+              "description": "{{state.message}}",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "guess": {
+                    "type": "integer",
+                    "title": "Your Guess",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "description": "Enter a number between {{state.game.min}} and {{state.game.max}}"
+                  }
+                },
+                "required": ["guess"]
+              },
+              "submitLabel": "Submit Guess",
+              "cancelLabel": "Give Up"
+            },
+            "stateKey": "lastInput",
+            "timeout": 300000
+          }
+        },
+        "checkGuess"
+      ]
+    ],
+    "displayResults"
+  ],
+  "metadata": {
+    "author": "FlowScript Team",
+    "created": "2025-01-04T10:00:00Z",
+    "tags": ["game", "interactive", "human-in-the-loop", "test"]
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "id": "simple-hitl-test",
+  "name": "Simple HITL Test",
+  "description": "Basic test of human-in-the-loop functionality",
+  "version": "1.0.0",
+  "initialState": {
+    "userName": null,
+    "favoriteColor": null,
+    "age": null,
+    "summary": null
+  },
+  "nodes": [
+    {
+      "formInput": {
+        "form": {
+          "title": "Welcome to FlowScript!",
+          "description": "Let's test the interactive features. Please provide some information:",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "title": "Your Name",
+                "description": "What should we call you?"
+              },
+              "age": {
+                "type": "integer",
+                "title": "Your Age",
+                "minimum": 1,
+                "maximum": 150
+              },
+              "favoriteColor": {
+                "type": "string",
+                "title": "Favorite Color",
+                "enum": ["Red", "Green", "Blue", "Yellow", "Purple", "Other"]
+              }
+            },
+            "required": ["name"]
+          }
+        },
+        "stateKey": "userData",
+        "timeout": 300000
+      }
+    },
+    [
+      "formInput",
+      {
+        "submitted": [
+          {
+            "setData": {
+              "path": "$.userName",
+              "value": "{{state.userData.name}}"
+            }
+          },
+          {
+            "setData": {
+              "path": "$.favoriteColor",
+              "value": "{{state.userData.favoriteColor}}"
+            }
+          },
+          {
+            "setData": {
+              "path": "$.age",
+              "value": "{{state.userData.age}}"
+            }
+          }
+        ],
+        "cancelled": {
+          "setData": {
+            "path": "$.summary",
+            "value": "User cancelled the form"
+          }
+        },
+        "timeout": {
+          "setData": {
+            "path": "$.summary",
+            "value": "Form timed out"
+          }
+        }
+      }
+    ],
+    [
+      {
+        "checkValue": {
+          "path": "$.userName",
+          "operator": "notEquals",
+          "value": null
+        }
+      },
+      {
+        "true": {
+          "setData": {
+            "path": "$.summary",
+            "value": "Hello {{state.userName}}! You are {{state.age}} years old and your favorite color is {{state.favoriteColor}}."
+          }
+        },
+        "false": {
+          "setData": {
+            "path": "$.summary",
+            "value": "No user data collected"
+          }
+        }
+      }
+    ]
+  ]
+}
