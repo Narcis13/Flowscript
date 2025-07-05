@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en" class="has-navbar-fixed-top">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FlowScript Testing Interface - Interactive workflow testing and debugging">
+    <title>FlowScript Testing Interface</title>
+    
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/css/app.css">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+</head>
+<body>
+    <div x-data="flowscriptApp">
+        <!-- Dark Mode Toggle -->
+        <button class="theme-toggle" @click="toggleTheme" :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+            <span class="icon">
+                <i class="fas" :class="darkMode ? 'fa-sun' : 'fa-moon'"></i>
+            </span>
+        </button>
+
+        <!-- Notification Container -->
+        <div class="notification-container" x-show="notifications.length > 0">
+            <template x-for="notification in notifications" :key="notification.id">
+                <div class="notification" 
+                     :class="{
+                         'is-success': notification.type === 'success',
+                         'is-danger': notification.type === 'danger',
+                         'is-warning': notification.type === 'warning',
+                         'is-info': notification.type === 'info'
+                     }"
+                     x-transition:enter="notification-enter"
+                     x-transition:leave="notification-leave">
+                    <button class="delete" @click="removeNotification(notification.id)"></button>
+                    <span x-text="notification.message"></span>
+                </div>
+            </template>
+        </div>
+
+        <!-- Navigation Bar -->
+        <nav class="navbar is-fixed-top is-dark" role="navigation" aria-label="main navigation">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">
+                    <span class="icon-text">
+                        <span class="icon has-text-primary">
+                            <i class="fas fa-flow-chart"></i>
+                        </span>
+                        <span class="has-text-weight-bold">FlowScript</span>
+                    </span>
+                </a>
+
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" 
+                   @click="mobileMenuOpen = !mobileMenuOpen" :class="{'is-active': mobileMenuOpen}">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div class="navbar-menu" :class="{'is-active': mobileMenuOpen}">
+                <div class="navbar-start">
+                    <a class="navbar-item" @click="activeTab = 'executor'" :class="{'is-active': activeTab === 'executor'}">
+                        <span class="icon-text">
+                            <span class="icon"><i class="fas fa-play"></i></span>
+                            <span>Executor</span>
+                        </span>
+                    </a>
+                    <a class="navbar-item" @click="activeTab = 'hitl'" :class="{'is-active': activeTab === 'hitl'}">
+                        <span class="icon-text">
+                            <span class="icon"><i class="fas fa-user"></i></span>
+                            <span>HITL Testing</span>
+                        </span>
+                    </a>
+                    <a class="navbar-item" @click="activeTab = 'monitor'" :class="{'is-active': activeTab === 'monitor'}">
+                        <span class="icon-text">
+                            <span class="icon"><i class="fas fa-chart-line"></i></span>
+                            <span>Monitor</span>
+                        </span>
+                    </a>
+                    <a class="navbar-item" @click="activeTab = 'debugger'" :class="{'is-active': activeTab === 'debugger'}">
+                        <span class="icon-text">
+                            <span class="icon"><i class="fas fa-bug"></i></span>
+                            <span>Debugger</span>
+                        </span>
+                    </a>
+                </div>
+
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="tags has-addons">
+                            <span class="tag" :class="connectionStatus === 'connected' ? 'is-success' : 'is-danger'">
+                                <span class="icon">
+                                    <i class="fas" :class="connectionStatus === 'connected' ? 'fa-wifi' : 'fa-wifi-slash'"></i>
+                                </span>
+                            </span>
+                            <span class="tag" x-text="connectionStatus === 'connected' ? 'Connected' : 'Disconnected'"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="section">
+            <div class="container">
+                <!-- Tab Content -->
+                <div class="content">
+                    <!-- Executor Tab -->
+                    <div x-show="activeTab === 'executor'" x-transition x-data="workflowExecutor">
+                        <h1 class="title">Workflow Executor</h1>
+                        <p class="subtitle">Execute and test FlowScript workflows</p>
+                        
+                        <div class="columns">
+                            <div class="column is-8">
+                                <div class="box">
+                                    <div class="field">
+                                        <label class="label">Workflow Selection</label>
+                                        <div class="tabs is-small">
+                                            <ul>
+                                                <li :class="{'is-active': !jsonEditorVisible}">
+                                                    <a @click="jsonEditorVisible = false">
+                                                        <span class="icon"><i class="fas fa-list"></i></span>
+                                                        <span>Select/Upload</span>
+                                                    </a>
+                                                </li>
+                                                <li :class="{'is-active': jsonEditorVisible}">
+                                                    <a @click="toggleJsonEditor()">
+                                                        <span class="icon"><i class="fas fa-code"></i></span>
+                                                        <span>JSON Editor</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <!-- Workflow Selector -->
+                                        <div x-show="!jsonEditorVisible">
+                                            <div class="field has-addons">
+                                                <div class="control is-expanded">
+                                                    <div class="select is-fullwidth">
+                                                        <select x-model="selectedWorkflow">
+                                                            <option value="">Choose a workflow...</option>
+                                                            <optgroup label="Examples">
+                                                                <template x-for="workflow in workflows.filter(w => w.source === 'example')" :key="workflow.id">
+                                                                    <option :value="workflow.id" x-text="workflow.name"></option>
+                                                                </template>
+                                                            </optgroup>
+                                                            <optgroup label="Uploaded">
+                                                                <template x-for="workflow in workflows.filter(w => w.source === 'upload')" :key="workflow.id">
+                                                                    <option :value="workflow.id" x-text="workflow.name"></option>
+                                                                </template>
+                                                            </optgroup>
+                                                            <optgroup label="Custom">
+                                                                <template x-for="workflow in workflows.filter(w => w.source === 'editor')" :key="workflow.id">
+                                                                    <option :value="workflow.id" x-text="workflow.name"></option>
+                                                                </template>
+                                                            </optgroup>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="control">
+                                                    <button class="button is-info" :disabled="!selectedWorkflow" @click="downloadWorkflow()">
+                                                        <span class="icon"><i class="fas fa-download"></i></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- File Upload -->
+                                            <div class="field">
+                                                <div class="file has-name is-fullwidth">
+                                                    <label class="file-label">
+                                                        <input class="file-input" type="file" accept=".json" @change="handleFileUpload($event)">
+                                                        <span class="file-cta">
+                                                            <span class="file-icon">
+                                                                <i class="fas fa-upload"></i>
+                                                            </span>
+                                                            <span class="file-label">
+                                                                Upload workflow...
+                                                            </span>
+                                                        </span>
+                                                        <span class="file-name" x-text="uploadedWorkflow ? uploadedWorkflow.name : 'No file selected'"></span>
+                                                    </label>
+                                                </div>
+                                                <p class="help is-danger" x-show="uploadError" x-text="uploadError"></p>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- JSON Editor -->
+                                        <div x-show="jsonEditorVisible">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <textarea class="textarea font-monospace" x-model="jsonEditorContent" 
+                                                              placeholder='{"id": "my-workflow", "name": "My Workflow", "definition": {...}}' 
+                                                              rows="12"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="field is-grouped">
+                                                <div class="control">
+                                                    <button class="button is-small is-success" @click="applyJsonEditor()">
+                                                        <span class="icon"><i class="fas fa-check"></i></span>
+                                                        <span>Apply</span>
+                                                    </button>
+                                                </div>
+                                                <div class="control">
+                                                    <button class="button is-small is-info" @click="formatJsonEditor()">
+                                                        <span class="icon"><i class="fas fa-indent"></i></span>
+                                                        <span>Format</span>
+                                                    </button>
+                                                </div>
+                                                <div class="control">
+                                                    <button class="button is-small" @click="jsonEditorVisible = false">
+                                                        <span class="icon"><i class="fas fa-times"></i></span>
+                                                        <span>Cancel</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="field">
+                                        <label class="label">Initial State (JSON)</label>
+                                        <div class="control">
+                                            <textarea class="textarea font-monospace" x-model="initialState" 
+                                                      placeholder='{"key": "value"}' rows="4"></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div class="field is-grouped">
+                                        <div class="control">
+                                            <button class="button is-primary" @click="executeWorkflowEnhanced" 
+                                                    :disabled="!selectedWorkflow || executing">
+                                                <span class="icon"><i class="fas fa-play"></i></span>
+                                                <span>Execute</span>
+                                            </button>
+                                        </div>
+                                        <div class="control">
+                                            <button class="button is-warning" @click="pauseWorkflowEnhanced" 
+                                                    :disabled="!executing">
+                                                <span class="icon"><i class="fas fa-pause"></i></span>
+                                                <span>Pause</span>
+                                            </button>
+                                        </div>
+                                        <div class="control">
+                                            <button class="button is-danger" @click="stopWorkflowEnhanced" 
+                                                    :disabled="!executing">
+                                                <span class="icon"><i class="fas fa-stop"></i></span>
+                                                <span>Stop</span>
+                                            </button>
+                                        </div>
+                                        <div class="control">
+                                            <button class="button is-info" @click="resumeWorkflow" 
+                                                    :disabled="executing">
+                                                <span class="icon"><i class="fas fa-forward"></i></span>
+                                                <span>Resume</span>
+                                            </button>
+                                        </div>
+                                        <div class="control">
+                                            <button class="button" @click="clearExecution" 
+                                                    :disabled="executing">
+                                                <span class="icon"><i class="fas fa-broom"></i></span>
+                                                <span>Clear</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="column is-4">
+                                <!-- Execution Status -->
+                                <div class="box" x-show="executionId">
+                                    <h3 class="title is-6">Execution Status</h3>
+                                    <div class="content">
+                                        <div class="tags has-addons mb-2">
+                                            <span class="tag">ID</span>
+                                            <span class="tag is-info is-light font-monospace" x-text="executionId ? executionId.substring(0, 8) + '...' : 'N/A'"></span>
+                                        </div>
+                                        <div class="field is-grouped is-grouped-multiline">
+                                            <div class="control">
+                                                <div class="tags has-addons">
+                                                    <span class="tag">Active</span>
+                                                    <span class="tag is-warning" x-text="activeNodes.size"></span>
+                                                </div>
+                                            </div>
+                                            <div class="control">
+                                                <div class="tags has-addons">
+                                                    <span class="tag">Completed</span>
+                                                    <span class="tag is-success" x-text="completedNodes.size"></span>
+                                                </div>
+                                            </div>
+                                            <div class="control">
+                                                <div class="tags has-addons">
+                                                    <span class="tag">Failed</span>
+                                                    <span class="tag is-danger" x-text="failedNodes.size"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Workflow Info -->
+                                <div class="box" x-show="selectedWorkflow">
+                                    <h3 class="title is-6">Workflow Information</h3>
+                                    <div class="content">
+                                        <template x-if="workflows.find(w => w.id === selectedWorkflow)">
+                                            <div>
+                                                <p class="has-text-weight-bold" x-text="workflows.find(w => w.id === selectedWorkflow).name"></p>
+                                                <p class="is-size-7 has-text-grey" x-text="workflows.find(w => w.id === selectedWorkflow).description"></p>
+                                                <div class="tags mt-2">
+                                                    <span class="tag is-light" x-text="workflows.find(w => w.id === selectedWorkflow).source"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Execution Timeline -->
+                        <div class="box" x-show="executionTimeline.length > 0">
+                            <h2 class="title is-5">
+                                Execution Timeline
+                                <span class="tag is-pulled-right" x-text="`${executionTimeline.length} events`"></span>
+                            </h2>
+                            <div class="workflow-timeline custom-scrollbar" style="max-height: 400px;">
+                                <template x-for="event in executionTimeline" :key="event.id">
+                                    <div class="timeline-item" :class="{
+                                        'is-completed': event.status === 'success',
+                                        'is-failed': event.status === 'danger',
+                                        'is-active': event.status === 'active',
+                                        'is-warning': event.status === 'warning'
+                                    }">
+                                        <div class="timeline-content">
+                                            <div class="level is-mobile">
+                                                <div class="level-left">
+                                                    <div class="level-item">
+                                                        <span class="tag is-small" :class="{
+                                                            'is-success': event.status === 'success',
+                                                            'is-danger': event.status === 'danger',
+                                                            'is-warning': event.status === 'warning',
+                                                            'is-info': event.status === 'active'
+                                                        }" x-text="event.type"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="level-right">
+                                                    <div class="level-item">
+                                                        <span class="is-size-7 has-text-grey" x-text="event.timestamp.toLocaleTimeString()"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <p x-text="event.message"></p>
+                                            <div x-show="event.error" class="notification is-danger is-light mt-2">
+                                                <p class="is-size-7" x-text="event.error"></p>
+                                            </div>
+                                            <div x-show="event.nodeId" class="mt-1">
+                                                <span class="tag is-small is-light" x-text="`Node: ${event.nodeId}`"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                        
+                        <!-- Legacy Timeline (fallback) -->
+                        <div class="box" x-show="executionId && executionTimeline.length === 0">
+                            <h2 class="title is-5">Execution Events</h2>
+                            <div class="workflow-timeline">
+                                <template x-for="event in executionEvents" :key="event.id">
+                                    <div class="timeline-item" :class="{
+                                        'is-completed': event.status === 'completed',
+                                        'is-failed': event.status === 'failed',
+                                        'is-active': event.status === 'active'
+                                    }">
+                                        <div class="timeline-content">
+                                            <p class="heading" x-text="event.timestamp"></p>
+                                            <p x-text="event.message"></p>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- HITL Testing Tab -->
+                    <div x-show="activeTab === 'hitl'" x-transition>
+                        <h1 class="title">Human-in-the-Loop Testing</h1>
+                        <p class="subtitle">Interact with workflows requiring human input</p>
+                        
+                        <div class="columns">
+                            <div class="column is-4">
+                                <div class="box">
+                                    <h2 class="title is-5">Pending Interactions</h2>
+                                    <div class="content">
+                                        <template x-for="interaction in pendingInteractions" :key="interaction.id">
+                                            <div class="notification is-warning is-light">
+                                                <p class="has-text-weight-bold" x-text="interaction.nodeName"></p>
+                                                <p class="is-size-7" x-text="interaction.workflowId"></p>
+                                                <button class="button is-small is-warning mt-2" 
+                                                        @click="selectInteraction(interaction)">
+                                                    Respond
+                                                </button>
+                                            </div>
+                                        </template>
+                                        <p x-show="pendingInteractions.length === 0" class="has-text-grey">
+                                            No pending interactions
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="column is-8">
+                                <div class="box" x-show="selectedInteraction">
+                                    <h2 class="title is-5">Interaction Form</h2>
+                                    <div id="interaction-form-container">
+                                        <!-- Dynamic form will be rendered here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monitor Tab -->
+                    <div x-show="activeTab === 'monitor'" x-transition>
+                        <h1 class="title">WebSocket Monitor</h1>
+                        <p class="subtitle">Real-time event monitoring</p>
+                        
+                        <!-- WebSocket Debug Panel -->
+                        <div class="box mb-4">
+                            <h2 class="title is-5">Connection Status</h2>
+                            <div class="content">
+                                <div class="field">
+                                    <label class="label">WebSocket URL</label>
+                                    <div class="control">
+                                        <input class="input is-small font-monospace" type="text" 
+                                               :value="wsClient ? wsClient.url : 'Not initialized'" readonly>
+                                    </div>
+                                </div>
+                                <div class="columns is-mobile">
+                                    <div class="column">
+                                        <p class="heading">Status</p>
+                                        <p class="is-size-7">
+                                            <span class="ws-status">
+                                                <span class="ws-status-dot" :class="{
+                                                    'connected': wsConnected,
+                                                    'reconnecting': store.connection.websocket.status === 'reconnecting',
+                                                    'disconnected': !wsConnected
+                                                }"></span>
+                                                <span x-text="store.connection.websocket.status"></span>
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="column">
+                                        <p class="heading">Reconnect Attempts</p>
+                                        <p class="is-size-7" x-text="store.connection.websocket.reconnectAttempts"></p>
+                                    </div>
+                                    <div class="column">
+                                        <p class="heading">Queued Messages</p>
+                                        <p class="is-size-7" x-text="wsClient ? wsClient.messageQueue.length : 0"></p>
+                                    </div>
+                                    <div class="column">
+                                        <p class="heading">Subscriptions</p>
+                                        <p class="is-size-7" x-text="wsClient ? wsClient.subscriptions.size : 0"></p>
+                                    </div>
+                                </div>
+                                <div class="field is-grouped">
+                                    <p class="control">
+                                        <button class="button is-small is-info" 
+                                                @click="wsClient && wsClient.reconnect()">
+                                            <span class="icon"><i class="fas fa-sync"></i></span>
+                                            <span>Reconnect</span>
+                                        </button>
+                                    </p>
+                                    <p class="control">
+                                        <button class="button is-small" 
+                                                @click="wsClient && wsClient.setDebug(!wsClient.debug); 
+                                                        store.preferences.debugEnabled = wsClient.debug;
+                                                        store.savePreferences();"
+                                                :class="wsClient && wsClient.debug ? 'is-warning' : 'is-light'">
+                                            <span class="icon"><i class="fas fa-bug"></i></span>
+                                            <span x-text="wsClient && wsClient.debug ? 'Disable Debug' : 'Enable Debug'"></span>
+                                        </button>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="box">
+                            <div class="field has-addons">
+                                <div class="control">
+                                    <input class="input" type="text" placeholder="Filter events..." 
+                                           x-model="eventFilter">
+                                </div>
+                                <div class="control">
+                                    <button class="button is-info" @click="clearEventLog">
+                                        <span class="icon"><i class="fas fa-trash"></i></span>
+                                        <span>Clear</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="event-log custom-scrollbar mt-4">
+                                <template x-for="event in filteredEvents" :key="event.id">
+                                    <div class="event-log-item" @click="selectedEvent = event">
+                                        <div class="level">
+                                            <div class="level-left">
+                                                <div class="level-item">
+                                                    <span class="tag" :class="getEventTagClass(event.type)" 
+                                                          x-text="event.type"></span>
+                                                </div>
+                                                <div class="level-item">
+                                                    <span class="is-size-7 has-text-grey" x-text="event.timestamp"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div x-show="selectedEvent === event" class="mt-2">
+                                            <pre class="json-viewer" x-text="JSON.stringify(event.data, null, 2)"></pre>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Debugger Tab -->
+                    <div x-show="activeTab === 'debugger'" x-transition>
+                        <h1 class="title">State Debugger</h1>
+                        <p class="subtitle">Inspect and debug workflow state</p>
+                        
+                        <div class="columns">
+                            <div class="column is-6">
+                                <div class="box">
+                                    <h2 class="title is-5">Current State</h2>
+                                    <pre class="json-viewer custom-scrollbar" 
+                                         x-text="JSON.stringify(currentState, null, 2)"></pre>
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="box">
+                                    <h2 class="title is-5">State History</h2>
+                                    <div class="field">
+                                        <label class="label">Select State Version</label>
+                                        <div class="control">
+                                            <div class="select is-fullwidth">
+                                                <select x-model="selectedStateVersion">
+                                                    <template x-for="(state, index) in stateHistory" :key="index">
+                                                        <option :value="index" x-text="`Version ${index + 1} - ${state.timestamp}`"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <pre class="json-viewer custom-scrollbar mt-4" 
+                                         x-show="selectedStateVersion !== null"
+                                         x-text="JSON.stringify(stateHistory[selectedStateVersion]?.state || {}, null, 2)"></pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer with Connection Status -->
+        <footer class="footer">
+            <div class="content has-text-centered">
+                <div class="level">
+                    <div class="level-item">
+                        <div>
+                            <p class="heading">Server</p>
+                            <p class="title is-6" x-text="`${window.location.hostname}:${window.location.port || '3013'}`"></p>
+                        </div>
+                    </div>
+                    <div class="level-item">
+                        <div>
+                            <p class="heading">WebSocket</p>
+                            <p class="title is-6">
+                                <span class="icon has-text-success" x-show="wsConnected">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="icon has-text-danger" x-show="!wsConnected">
+                                    <i class="fas fa-times-circle"></i>
+                                </span>
+                                <span x-text="wsConnected ? 'Connected' : 'Disconnected'"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="level-item">
+                        <div>
+                            <p class="heading">API Status</p>
+                            <p class="title is-6">
+                                <span class="icon has-text-success" x-show="apiHealthy">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span class="icon has-text-danger" x-show="!apiHealthy">
+                                    <i class="fas fa-times-circle"></i>
+                                </span>
+                                <span x-text="apiHealthy ? 'Healthy' : 'Unhealthy'"></span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <p class="mt-4">
+                    <strong>FlowScript</strong> - A declarative workflow system with human-in-the-loop capabilities
+                </p>
+                <p class="is-size-7 has-text-grey">
+                    Press <kbd>Ctrl</kbd>+<kbd>K</kbd> to switch tabs • 
+                    <kbd>Ctrl</kbd>+<kbd>E</kbd> to execute • 
+                    <kbd>Ctrl</kbd>+<kbd>/</kbd> for dark mode
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Application Scripts -->
+    <script src="/js/websocket.js"></script>
+    <script src="/js/workflow.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import { FlowScriptWebSocketServer } from './websocket';
 import { ExecutionManager, WorkflowStorage } from './services';
 import { registerAllNodes } from '../nodes/registerAll';
 
-export async function startFullServer(port: number = 3000): Promise<void> {
+export async function startFullServer(port: number = 3013): Promise<void> {
   // Register all nodes before starting the server
   registerAllNodes();
   
@@ -77,7 +77,8 @@ export async function startFullServer(port: number = 3000): Promise<void> {
   // Start listening
   httpServer.listen(port, () => {
     console.log(`FlowScript Full API Server running on port ${port}`);
-    console.log(`REST API: http://localhost:${port}`);
+    console.log(`Web Interface: http://localhost:${port}`);
+    console.log(`REST API: http://localhost:${port}/api`);
     console.log(`WebSocket: ws://localhost:${port}/ws`);
   });
 

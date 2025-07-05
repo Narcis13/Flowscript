@@ -1,0 +1,838 @@
+/**
+ * FlowScript Testing Interface - Custom Styles
+ */
+
+/* ===========================
+   Custom Properties & Themes
+   =========================== */
+:root {
+  /* Brand Colors */
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --accent-color: #f093fb;
+  
+  /* Status Colors */
+  --success-color: #48c774;
+  --info-color: #3298dc;
+  --warning-color: #ffdd57;
+  --danger-color: #f14668;
+  
+  /* Neutral Colors */
+  --light-bg: #ffffff;
+  --light-surface: #f5f5f5;
+  --light-border: #e0e0e0;
+  --light-text: #363636;
+  --light-text-muted: #6b7280;
+  
+  /* Dark Theme Colors */
+  --dark-bg: #1a1a1a;
+  --dark-surface: #2d2d2d;
+  --dark-border: #404040;
+  --dark-text: #f5f5f5;
+  --dark-text-muted: #a0a0a0;
+  
+  /* Component Specific */
+  --json-bg: #f8f9fa;
+  --json-border: #dee2e6;
+  --code-font: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+  
+  /* Animations */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+}
+
+/* Dark Mode Variables */
+[data-theme="dark"] {
+  --light-bg: var(--dark-bg);
+  --light-surface: var(--dark-surface);
+  --light-border: var(--dark-border);
+  --light-text: var(--dark-text);
+  --light-text-muted: var(--dark-text-muted);
+  --json-bg: var(--dark-surface);
+  --json-border: var(--dark-border);
+}
+
+/* ===========================
+   Base Styles
+   =========================== */
+body {
+  transition: background-color var(--transition-normal);
+}
+
+[data-theme="dark"] body {
+  background-color: var(--dark-bg);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .box,
+[data-theme="dark"] .card {
+  background-color: var(--dark-surface);
+  color: var(--dark-text);
+}
+
+[data-theme="dark"] .navbar {
+  background-color: var(--dark-surface) !important;
+}
+
+[data-theme="dark"] .footer {
+  background-color: var(--dark-surface);
+}
+
+/* ===========================
+   FlowScript Branding
+   =========================== */
+.hero.is-flowscript {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero.is-flowscript::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  bottom: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: backgroundScroll 20s linear infinite;
+}
+
+@keyframes backgroundScroll {
+  from { transform: translate(0, 0); }
+  to { transform: translate(50px, 50px); }
+}
+
+/* FlowScript Logo Animation */
+.navbar-brand .icon {
+  transition: transform var(--transition-normal);
+}
+
+.navbar-brand:hover .icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.fa-flow-chart {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ===========================
+   Status Animations
+   =========================== */
+
+/* Connection Status Pulse */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(72, 199, 116, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(72, 199, 116, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(72, 199, 116, 0);
+  }
+}
+
+.connection-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  transition: all var(--transition-normal);
+}
+
+.connection-status.is-connected .icon {
+  animation: pulse 2s infinite;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+.status-indicator.is-success {
+  background-color: var(--success-color);
+}
+
+.status-indicator.is-warning {
+  background-color: var(--warning-color);
+  animation: statusBlink 1s ease-in-out infinite;
+}
+
+.status-indicator.is-danger {
+  background-color: var(--danger-color);
+  animation: statusBlink 0.5s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes statusBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===========================
+   JSON Viewer Styling
+   =========================== */
+.json-viewer {
+  font-family: var(--code-font);
+  font-size: 0.875rem;
+  background-color: var(--json-bg);
+  border: 1px solid var(--json-border);
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  max-height: 400px;
+  position: relative;
+  transition: all var(--transition-normal);
+}
+
+.json-viewer:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* JSON Syntax Highlighting */
+.json-viewer .json-key {
+  color: #0969da;
+  font-weight: 600;
+}
+
+.json-viewer .json-string {
+  color: #032f62;
+}
+
+.json-viewer .json-number {
+  color: #d73a49;
+}
+
+.json-viewer .json-boolean {
+  color: #005cc5;
+  font-weight: 600;
+}
+
+.json-viewer .json-null {
+  color: #6a737d;
+  font-style: italic;
+}
+
+[data-theme="dark"] .json-viewer .json-key {
+  color: #79c0ff;
+}
+
+[data-theme="dark"] .json-viewer .json-string {
+  color: #a5d6ff;
+}
+
+[data-theme="dark"] .json-viewer .json-number {
+  color: #ff7b72;
+}
+
+[data-theme="dark"] .json-viewer .json-boolean {
+  color: #56d4dd;
+}
+
+/* ===========================
+   Workflow Timeline
+   =========================== */
+.workflow-timeline {
+  position: relative;
+  padding-left: 2.5rem;
+  min-height: 100px;
+}
+
+.workflow-timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.75rem;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+  opacity: 0.3;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+  animation: slideInLeft var(--transition-normal);
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.75rem;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--info-color);
+  border: 2px solid var(--light-bg);
+  box-shadow: 0 0 0 3px var(--light-border);
+  transition: all var(--transition-normal);
+}
+
+.timeline-item.is-completed::before {
+  background-color: var(--success-color);
+  animation: checkmarkPop var(--transition-normal);
+}
+
+.timeline-item.is-failed::before {
+  background-color: var(--danger-color);
+  animation: shake 0.5s;
+}
+
+.timeline-item.is-active::before {
+  background-color: var(--warning-color);
+  animation: activePulse 1.5s infinite;
+}
+
+@keyframes checkmarkPop {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes activePulse {
+  0% {
+    box-shadow: 0 0 0 3px var(--light-border);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(255, 221, 87, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 3px var(--light-border);
+  }
+}
+
+/* ===========================
+   HITL Form Styling
+   =========================== */
+.hitl-form {
+  max-width: 600px;
+  margin: 0 auto;
+  animation: fadeIn var(--transition-normal);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.hitl-countdown {
+  font-size: 0.875rem;
+  color: var(--warning-color);
+  font-weight: 600;
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+@keyframes countdownPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Form Field Animations */
+.field {
+  transition: all var(--transition-normal);
+}
+
+.field:focus-within {
+  transform: translateY(-2px);
+}
+
+.field:focus-within .label {
+  color: var(--primary-color);
+}
+
+/* ===========================
+   Event Log Styling
+   =========================== */
+.event-log {
+  max-height: 500px;
+  overflow-y: auto;
+  font-size: 0.875rem;
+  background-color: var(--light-surface);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.event-log-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  background-color: var(--light-bg);
+  border: 1px solid var(--light-border);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  animation: slideInRight var(--transition-normal);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.event-log-item:hover {
+  transform: translateX(-4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--primary-color);
+}
+
+/* Event Type Colors */
+.tag.is-workflow-event {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  color: white;
+}
+
+/* ===========================
+   State Diff Viewer
+   =========================== */
+.state-diff {
+  font-family: var(--code-font);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.diff-added {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 4px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.diff-added::before {
+  content: '+';
+  position: absolute;
+  left: -15px;
+  font-weight: bold;
+}
+
+.diff-removed {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 2px 4px;
+  border-radius: 2px;
+  text-decoration: line-through;
+  position: relative;
+}
+
+.diff-removed::before {
+  content: '-';
+  position: absolute;
+  left: -15px;
+  font-weight: bold;
+}
+
+.diff-modified {
+  background-color: #fff3e0;
+  color: #ef6c00;
+  padding: 2px 4px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.diff-modified::before {
+  content: '~';
+  position: absolute;
+  left: -15px;
+  font-weight: bold;
+}
+
+/* ===========================
+   Loading States
+   =========================== */
+.is-loading-overlay {
+  position: relative;
+  pointer-events: none;
+}
+
+.is-loading-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+
+[data-theme="dark"] .is-loading-overlay::after {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Loading Spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--light-border);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===========================
+   Custom Scrollbar
+   =========================== */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-color) var(--light-surface);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--light-surface);
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color);
+}
+
+/* ===========================
+   Navigation Enhancements
+   =========================== */
+.navbar-item {
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.navbar-item::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: width var(--transition-normal);
+}
+
+.navbar-item:hover::before,
+.navbar-item.is-active::before {
+  width: 100%;
+}
+
+.navbar-item.is-active {
+  background-color: rgba(102, 126, 234, 0.1);
+  color: var(--primary-color) !important;
+}
+
+/* ===========================
+   Tab Transitions
+   =========================== */
+[x-cloak] {
+  display: none !important;
+}
+
+[x-show] {
+  transition: opacity var(--transition-normal);
+}
+
+/* Tab content animation */
+[x-transition:enter] {
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
+}
+
+[x-transition:enter-start] {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+[x-transition:enter-end] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[x-transition:leave] {
+  transition: opacity var(--transition-fast);
+}
+
+[x-transition:leave-end] {
+  opacity: 0;
+}
+
+/* ===========================
+   Utility Classes
+   =========================== */
+.font-monospace {
+  font-family: var(--code-font);
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.shadow-hover {
+  transition: box-shadow var(--transition-normal);
+}
+
+.shadow-hover:hover {
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+}
+
+/* ===========================
+   Button Enhancements
+   =========================== */
+.button {
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width var(--transition-normal), height var(--transition-normal);
+}
+
+.button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(50%);
+}
+
+.button.is-primary {
+  background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+  border: none;
+}
+
+.button.is-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* ===========================
+   Mobile Responsive
+   =========================== */
+@media screen and (max-width: 768px) {
+  .footer .level {
+    display: block;
+  }
+  
+  .footer .level-item {
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .workflow-timeline {
+    padding-left: 1.5rem;
+  }
+  
+  .json-viewer {
+    font-size: 0.75rem;
+  }
+}
+
+/* ===========================
+   Dark Mode Toggle
+   =========================== */
+.theme-toggle {
+  position: fixed;
+  top: 70px;
+  right: 20px;
+  z-index: 999;
+  background: var(--light-surface);
+  border: 2px solid var(--light-border);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle .icon {
+  font-size: 1.5rem;
+  transition: transform var(--transition-normal);
+}
+
+.theme-toggle:active .icon {
+  transform: rotate(180deg);
+}
+
+/* ===========================
+   WebSocket Status Indicators
+   =========================== */
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ws-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all var(--transition-fast);
+}
+
+.ws-status-dot.connected {
+  background-color: var(--success-color);
+  box-shadow: 0 0 0 2px rgba(72, 199, 116, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.ws-status-dot.reconnecting {
+  background-color: var(--warning-color);
+  animation: blink 1s infinite;
+}
+
+.ws-status-dot.disconnected {
+  background-color: var(--danger-color);
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ===========================
+   Notification System
+   =========================== */
+.notification-container {
+  position: fixed;
+  top: 80px;
+  right: 80px;
+  z-index: 1000;
+  max-width: 400px;
+}
+
+.notification-container .notification {
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  animation: slideInRight var(--transition-normal);
+}
+
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes notification-leave {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+[x-transition\:enter="notification-enter"] {
+  animation: notification-enter var(--transition-normal);
+}
+
+[x-transition\:leave="notification-leave"] {
+  animation: notification-leave var(--transition-fast);
+}
+
+@media screen and (max-width: 768px) {
+  .notification-container {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+@media print {
+  .navbar, .footer, .theme-toggle, .notification-container {
+    display: none;
+  }
+  
+  .box {
+    break-inside: avoid;
+  }
+  
+  .json-viewer {
+    max-height: none;
+  }
+}

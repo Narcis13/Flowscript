@@ -7,6 +7,9 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
 import { WorkflowStorage, ExecutionManager } from '../services';
+import { serveStatic } from '@hono/node-server/serve-static';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // Import routes
 import { createExecuteRoute } from './routes/execute';
@@ -20,8 +23,28 @@ export function createApp(): Hono {
   const app = new Hono();
 
   // Middleware
-  app.use('*', cors());
+  app.use('*', cors({
+    origin: ['http://localhost:3013', 'http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3013'],
+    credentials: true
+  }));
   app.use('*', logger());
+
+  // Serve static files from public directory
+  // Note: serveStatic needs to come after specific routes to avoid conflicts
+  
+  // First, serve the root specifically
+  app.get('/', (c) => {
+    // Manually serve the index.html
+    const indexPath = path.join(process.cwd(), 'public', 'index.html');
+    
+    try {
+      const html = fs.readFileSync(indexPath, 'utf-8');
+      return c.html(html);
+    } catch (error) {
+      console.error('Error serving index.html:', error);
+      return c.text('Welcome to FlowScript API', 404);
+    }
+  });
 
   // Error handling
   app.onError((err, c) => {
@@ -104,13 +127,41 @@ export function createApp(): Hono {
   app.route('/executions/:executionId/status', createStatusRoute());
   app.route('/executions/:executionId/resume', createResumeRoute());
 
+  // Serve static files AFTER API routes
+  // Manual static file serving for better control
+  app.get('/css/*', (c) => {
+    const filePath = c.req.path;
+    const fullPath = path.join(process.cwd(), 'public', filePath);
+    
+    try {
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      c.header('Content-Type', 'text/css');
+      return c.text(content);
+    } catch (error) {
+      return c.notFound();
+    }
+  });
+  
+  app.get('/js/*', (c) => {
+    const filePath = c.req.path;
+    const fullPath = path.join(process.cwd(), 'public', filePath);
+    
+    try {
+      const content = fs.readFileSync(fullPath, 'utf-8');
+      c.header('Content-Type', 'application/javascript');
+      return c.text(content);
+    } catch (error) {
+      return c.notFound();
+    }
+  });
+
   return app;
 }
 
 /**
  * Start the server
  */
-export async function startServer(port: number = 3000): Promise<{ app: Hono; server: any }> {
+export async function startServer(port: number = 3013): Promise<{ app: Hono; server: any }> {
   // Initialize services
   const storage = WorkflowStorage.getInstance();
   storage.loadExampleWorkflows();
