@@ -16,6 +16,11 @@ export function interpolateTemplate(template: string, state: Record<string, any>
   }
 
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+    // Handle special dynamic variables
+    if (key === '_timestamp') {
+      return new Date().toISOString();
+    }
+    
     if (state.hasOwnProperty(key)) {
       const value = state[key];
       // Convert value to string representation

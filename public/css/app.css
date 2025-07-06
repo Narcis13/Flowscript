@@ -251,6 +251,8 @@ body {
   position: relative;
   padding-left: 2.5rem;
   min-height: 100px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .workflow-timeline::before {
@@ -835,4 +837,98 @@ body {
   .json-viewer {
     max-height: none;
   }
+}
+
+/* ===========================
+   Layout Fixes for Footer Overlap
+   =========================== */
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main content should grow and be scrollable */
+.section.is-flex-grow-1 {
+  flex: 1 0 auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab panels should be scrollable and contained */
+.tab-content {
+  height: calc(100vh - 200px); /* Adjust for navbar and footer */
+  overflow: hidden;
+}
+
+.tab-content > div[x-show] {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 2rem;
+}
+
+/* Ensure footer stays at bottom */
+.footer {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+/* Fix timeline container specifically */
+.workflow-timeline.custom-scrollbar {
+  max-height: 400px !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  position: relative !important;
+}
+
+/* Timeline overflow fixes */
+.box:has(.workflow-timeline) {
+  max-height: 500px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fallback for browsers without :has() support */
+.execution-timeline-box {
+  max-height: 500px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.box .title {
+  flex-shrink: 0;
+}
+
+/* Ensure timeline items don't overflow */
+.timeline-item {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  margin-right: 1rem;
+}
+
+.timeline-content {
+  max-width: calc(100% - 2rem);
+  overflow: hidden;
+}
+
+.timeline-content p {
+  word-break: break-word;
+  white-space: normal;
+  margin: 0.5rem 0;
+}
+
+/* Fix long node IDs */
+.timeline-content .tag {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

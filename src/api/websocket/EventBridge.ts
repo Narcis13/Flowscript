@@ -2,6 +2,7 @@ import { ExecutionManager } from '../services/ExecutionManager';
 import { ConnectionManager } from './ConnectionManager';
 import { createMessage } from './protocol';
 import { WorkflowEventData } from './types';
+import { WorkflowEventPayload } from '../../core/types/events';
 
 export class EventBridge {
   private eventHandlers: Map<string, (event: WorkflowEventData) => void> = new Map();
@@ -31,7 +32,20 @@ export class EventBridge {
 
   private attachToExecution(executionId: string): void {
     const runtime = this.executionManager.getRuntime(executionId);
-    if (!runtime || !runtime.emitter) return;
+    if (!runtime || !runtime.emitter) {
+      console.log(`No runtime found for execution ${executionId}, will retry later`);
+      // Retry after a short delay
+      setTimeout(() => {
+        const retryRuntime = this.executionManager.getRuntime(executionId);
+        if (retryRuntime && retryRuntime.emitter) {
+          console.log(`Retrying attachment for execution ${executionId}`);
+          this.attachToExecution(executionId);
+        }
+      }, 100);
+      return;
+    }
+
+    console.log(`Attaching EventBridge to execution ${executionId}`);
 
     // Create a unique handler for this execution
     const handler = (event: WorkflowEventData) => {
@@ -41,32 +55,39 @@ export class EventBridge {
     // Store the handler so we can remove it later
     this.eventHandlers.set(executionId, handler);
 
-    // Listen to all workflow events
+    // Listen to all workflow events - using the correct event names from WorkflowEvent enum
     const events = [
-      'workflow_started',
-      'node_started',
-      'node_completed',
-      'node_failed',
-      'workflow_paused',
-      'workflow_resumed',
-      'workflow_completed',
-      'workflow_failed',
-      'human_interaction_required',
-      'state_updated'
+      'workflow:started',
+      'node:executing',
+      'node:completed',
+      'node:failed',
+      'workflow:paused',
+      'workflow:resumed',
+      'workflow:completed',
+      'workflow:failed',
+      'human:input:required',
+      'state:updated'
     ];
 
     events.forEach(eventType => {
-      runtime.emitter.on(eventType, (eventData: any) => {
-        handler({ type: eventType, ...eventData });
+      runtime.emitter.on(eventType, (eventData: WorkflowEventPayload) => {
+        // The eventData already contains all the fields we need
+        handler({
+          type: eventType,
+          workflowId: eventData.workflowId,
+          executionId: eventData.executionId,
+          timestamp: eventData.timestamp,
+          ...eventData.data
+        });
       });
     });
 
     // Special handling for completion events
-    runtime.emitter.on('workflow_completed', () => {
+    runtime.emitter.on('workflow:completed', () => {
       this.cleanupExecution(executionId);
     });
 
-    runtime.emitter.on('workflow_failed', () => {
+    runtime.emitter.on('workflow:failed', () => {
       this.cleanupExecution(executionId);
     });
   }
@@ -85,84 +106,85 @@ export class EventBridge {
   }
 
   private transformEventToMessage(executionId: string, event: WorkflowEventData): any {
+    // Map the event type (with colons) to WebSocket message types (with underscores)
     switch (event.type) {
-      case 'workflow_started':
+      case 'workflow:started':
         return createMessage('workflow_started', {
           executionId,
           workflowId: event.workflowId,
           timestamp: event.timestamp
         });
 
-      case 'node_started':
+      case 'node:executing':
         return createMessage('node_started', {
           executionId,
-          nodeId: event.nodeId,
-          nodeName: event.nodeName,
+          nodeId: event.nodeId || event.data?.nodeId,
+          nodeName: event.nodeName || event.data?.nodeName,
           timestamp: event.timestamp
         });
 
-      case 'node_completed':
+      case 'node:completed':
         return createMessage('node_completed', {
           executionId,
-          nodeId: event.nodeId,
-          nodeName: event.nodeName,
-          edge: event.edge,
-          data: event.data,
+          nodeId: event.nodeId || event.data?.nodeId,
+          nodeName: event.nodeName || event.data?.nodeName,
+          edge: event.edge || event.data?.edge,
+          data: event.data?.edgeData || event.data,
           timestamp: event.timestamp
         });
 
-      case 'node_failed':
+      case 'node:failed':
         return createMessage('node_failed', {
           executionId,
-          nodeId: event.nodeId,
-          nodeName: event.nodeName,
-          error: event.error,
+          nodeId: event.nodeId || event.data?.nodeId,
+          nodeName: event.nodeName || event.data?.nodeName,
+          error: event.error || event.data?.error,
           timestamp: event.timestamp
         });
 
-      case 'workflow_paused':
+      case 'workflow:paused':
         return createMessage('workflow_paused', {
           executionId,
-          nodeId: event.nodeId,
-          reason: event.reason,
+          nodeId: event.nodeId || event.data?.nodeId,
+          reason: event.reason || event.data?.reason,
           timestamp: event.timestamp
         });
 
-      case 'workflow_resumed':
+      case 'workflow:resumed':
         return createMessage('workflow_resumed', {
           executionId,
-          nodeId: event.nodeId,
+          nodeId: event.nodeId || event.data?.nodeId,
           data: event.data,
           timestamp: event.timestamp
         });
 
-      case 'workflow_completed':
+      case 'workflow:completed':
         return createMessage('workflow_completed', {
           executionId,
-          finalState: event.finalState,
+          finalState: event.finalState || event.data?.finalState,
           timestamp: event.timestamp
         });
 
-      case 'workflow_failed':
+      case 'workflow:failed':
         return createMessage('workflow_failed', {
           executionId,
-          error: event.error,
+          error: event.error || event.data?.error,
           timestamp: event.timestamp
         });
 
-      case 'human_interaction_required':
+      case 'human:input:required':
         return createMessage('human_interaction_required', {
           executionId,
-          nodeId: event.nodeId,
-          nodeInfo: event.nodeInfo,
+          nodeId: event.nodeId || event.data?.nodeId,
+          nodeInfo: event.nodeInfo || event.data?.nodeInfo,
           timestamp: event.timestamp
         });
 
-      case 'state_updated':
+      case 'state:updated':
         return createMessage('state_updated', {
           executionId,
-          path: event.path,
-          newValue: event.newValue,
+          path: event.path || event.data?.path,
+          newValue: event.newValue || event.data?.newValue,
           timestamp: event.timestamp
         });
 
@@ -179,18 +201,18 @@ export class EventBridge {
     if (handler) {
       const runtime = this.executionManager.getRuntime(executionId);
       if (runtime && runtime.emitter) {
-        // Remove all event listeners
+        // Remove all event listeners - using the correct event names from WorkflowEvent enum
         const events = [
-          'workflow_started',
-          'node_started',
-          'node_completed',
-          'node_failed',
-          'workflow_paused',
-          'workflow_resumed',
-          'workflow_completed',
-          'workflow_failed',
-          'human_interaction_required',
-          'state_updated'
+          'workflow:started',
+          'node:executing',
+          'node:completed',
+          'node:failed',
+          'workflow:paused',
+          'workflow:resumed',
+          'workflow:completed',
+          'workflow:failed',
+          'human:input:required',
+          'state:updated'
         ];
 
         events.forEach(eventType => {

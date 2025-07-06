@@ -7,7 +7,6 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { HTTPException } from 'hono/http-exception';
 import { WorkflowStorage, ExecutionManager } from '../services';
-import { serveStatic } from '@hono/node-server/serve-static';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -100,7 +99,9 @@ export function createApp(): Hono {
         const workflow = storage.getWorkflow(id);
         return {
           id: workflow?.id,
-          name: workflow?.name || id
+          name: workflow?.name || id,
+          description: '', // WorkflowDefinition doesn't have description
+          source: 'example' // All loaded workflows are treated as examples
         };
       })
     });

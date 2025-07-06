@@ -3,6 +3,8 @@
  */
 
 import { WorkflowDefinition } from '../../core/types/workflow';
+import { promises as fs } from 'fs';
+import { join } from 'path';
 
 /**
  * Workflow storage service
@@ -54,6 +56,38 @@ export class WorkflowStorage {
    */
   clear(): void {
     this.workflows.clear();
+  }
+
+  /**
+   * Load workflows from JSON files in a directory
+   */
+  async loadWorkflowsFromDirectory(dirPath: string): Promise<void> {
+    try {
+      const files = await fs.readdir(dirPath);
+      const jsonFiles = files.filter(file => file.endsWith('.json'));
+      
+      for (const file of jsonFiles) {
+        const filePath = join(dirPath, file);
+        try {
+          const content = await fs.readFile(filePath, 'utf-8');
+          const workflow = JSON.parse(content) as WorkflowDefinition;
+          
+          // Validate workflow has required fields
+          if (workflow.id && workflow.nodes) {
+            this.registerWorkflow(workflow);
+            console.log(`Loaded workflow: ${workflow.id} from ${file}`);
+          } else {
+            console.warn(`Invalid workflow structure in ${file}`);
+          }
+        } catch (error) {
+          console.error(`Failed to load workflow from ${file}:`, error);
+        }
+      }
+      
+      console.log(`Loaded ${this.workflows.size} workflows total`);
+    } catch (error) {
+      console.error(`Failed to read workflow directory ${dirPath}:`, error);
+    }
   }
 
   /**

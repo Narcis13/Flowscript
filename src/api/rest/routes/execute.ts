@@ -9,7 +9,8 @@ import { WorkflowStorage, ExecutionManager } from '../../services';
 
 // Request schema
 const executeRequestSchema = z.object({
-  input: z.record(z.any()).optional()
+  input: z.record(z.any()).optional(),
+  initialInput: z.record(z.any()).optional() // Also accept initialInput from frontend
 });
 
 /**
@@ -51,7 +52,9 @@ export function createExecuteRoute(): Hono {
     // Start execution
     const manager = ExecutionManager.getInstance();
     try {
-      const executionId = await manager.startExecution(workflow, parseResult.data.input);
+      // Use initialInput if provided (from frontend), otherwise use input
+      const inputData = parseResult.data.initialInput || parseResult.data.input;
+      const executionId = await manager.startExecution(workflow, inputData);
       
       // Return execution ID
       return c.json(

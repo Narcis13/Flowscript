@@ -152,10 +152,12 @@ export class WorkflowExecutor {
     state: StateManager,
     runtime: RuntimeContextImpl
   ): Promise<ExecutionResult> {
+    console.log(`Executing flow with ${elements.length} elements`);
     let pc = 0; // Program counter
     let exitSignal: string | undefined;
 
     while (pc < elements.length && !exitSignal) {
+      console.log(`Executing element at index ${pc}:`, elements[pc]);
       // Check timeout
       if (Date.now() - this.executionStartTime > this.timeout) {
         throw new Error('Workflow execution timeout');

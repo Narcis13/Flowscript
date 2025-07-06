@@ -72,6 +72,9 @@ export class ExecutionManager extends EventEmitter {
     const executionId = this.generateExecutionId();
     const eventEmitter = new EventEmitter();
 
+    console.log(`Starting execution ${executionId} for workflow ${workflow.id}`);
+    console.log('Initial input:', initialInput);
+
     // Create executor
     const executor = new WorkflowExecutor(workflow, { eventEmitter });
 
@@ -97,11 +100,15 @@ export class ExecutionManager extends EventEmitter {
     // Set up event listeners
     this.setupEventListeners(executionId, eventEmitter);
 
-    // Start execution asynchronously
-    this.executeWorkflow(executionId, initialInput);
-
-    // Emit event for new execution
+    // Emit event for new execution BEFORE starting execution
+    // This gives EventBridge time to attach
     this.emit('execution_started', executionId);
+
+    // Start execution asynchronously with a small delay
+    // This ensures EventBridge has time to attach
+    setTimeout(() => {
+      this.executeWorkflow(executionId, initialInput);
+    }, 10);
 
     return executionId;
   }
@@ -233,16 +240,27 @@ export class ExecutionManager extends EventEmitter {
     const entry = this.executions.get(executionId);
     if (!entry) return;
 
+    console.log(`Executing workflow ${entry.workflow.id} with execution ID ${executionId}`);
+
     try {
       // Update status to running
       entry.metadata.status = ExecutionStatus.RUNNING;
 
+      // Use initialInput if provided, otherwise use workflow's initialState
+      const stateToUse = initialInput && Object.keys(initialInput).length > 0 
+        ? initialInput 
+        : entry.workflow.initialState;
+      
+      console.log('Using initial state:', stateToUse);
+
       // Start execution
-      const executionPromise = entry.executor.execute({ initialState: initialInput });
+      console.log('Starting workflow executor...');
+      const executionPromise = entry.executor.execute({ initialState: stateToUse });
       entry.executionPromise = executionPromise;
 
       // Wait for completion
       const result = await executionPromise;
+      console.log('Workflow execution result:', result);
 
       // Update metadata based on result
       if (result.completed) {

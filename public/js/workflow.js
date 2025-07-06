@@ -39,8 +39,8 @@ document.addEventListener('alpine:init', () => {
                     const content = e.target.result;
                     const workflow = JSON.parse(content);
                     
-                    // Validate workflow structure
-                    if (!workflow.id || !workflow.name || !workflow.definition) {
+                    // Validate workflow structure - FlowScript format
+                    if (!workflow.id || !workflow.nodes) {
                         throw new Error('Invalid workflow structure');
                     }
                     
@@ -85,11 +85,8 @@ document.addEventListener('alpine:init', () => {
                 this.jsonEditorContent = JSON.stringify({
                     id: 'custom-workflow',
                     name: 'Custom Workflow',
-                    description: 'Created in JSON editor',
-                    definition: {
-                        initialState: {},
-                        workflow: []
-                    }
+                    initialState: {},
+                    nodes: []
                 }, null, 2);
             }
         },
@@ -99,9 +96,9 @@ document.addEventListener('alpine:init', () => {
             try {
                 const workflow = JSON.parse(this.jsonEditorContent);
                 
-                // Validate workflow structure
-                if (!workflow.id || !workflow.name || !workflow.definition) {
-                    throw new Error('Invalid workflow structure. Required fields: id, name, definition');
+                // Validate workflow structure - FlowScript format
+                if (!workflow.id || !workflow.nodes) {
+                    throw new Error('Invalid workflow structure. Required fields: id, nodes');
                 }
                 
                 // Check if workflow already exists
@@ -419,6 +416,9 @@ document.addEventListener('alpine:init', () => {
                             timestamp: new Date(),
                             status: 'success'
                         });
+                        // Update execution status
+                        this.store.workflows.executing = false;
+                        this.notify('Workflow completed successfully', 'success');
                     }
                 });
                 
@@ -431,6 +431,9 @@ document.addEventListener('alpine:init', () => {
                             status: 'danger',
                             error: event.detail.error
                         });
+                        // Update execution status
+                        this.store.workflows.executing = false;
+                        this.notify(`Workflow failed: ${event.detail.error}`, 'danger');
                     }
                 });
             }
