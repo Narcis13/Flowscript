@@ -23,8 +23,8 @@ class FlowScriptWebSocket extends EventTarget {
         this.messageQueue = [];
         this.subscriptions = new Set();
         
-        // Debug settings
-        this.debug = localStorage.getItem('flowscript-debug-ws') === 'true';
+        // Debug settings - enable by default for troubleshooting
+        this.debug = localStorage.getItem('flowscript-debug-ws') !== 'false';
         
         // Protocol message types (from server implementation)
         this.messageTypes = {
@@ -90,7 +90,10 @@ class FlowScriptWebSocket extends EventTarget {
     // Set up WebSocket event handlers
     setupEventHandlers() {
         this.ws.addEventListener('open', this.onOpen.bind(this));
-        this.ws.addEventListener('message', this.onMessage.bind(this));
+        this.ws.addEventListener('message', (event) => {
+            console.log('[FlowScriptWS] Raw message received:', event.data);
+            this.onMessage(event);
+        });
         this.ws.addEventListener('close', this.onClose.bind(this));
         this.ws.addEventListener('error', this.onError.bind(this));
     }
@@ -121,6 +124,11 @@ class FlowScriptWebSocket extends EventTarget {
             const message = JSON.parse(event.data);
             this.log('Received:', message.type, message.data);
             
+            // Log workflow-related messages with more detail
+            if (message.type.includes('workflow') || message.type.includes('node')) {
+                console.log(`[WebSocket] Workflow event: ${message.type}`, message.data);
+            }
+            
             // Handle specific message types
             switch (message.type) {
                 case this.messageTypes.CONNECTED:
@@ -138,9 +146,14 @@ class FlowScriptWebSocket extends EventTarget {
                 case this.messageTypes.HUMAN_INTERACTION_REQUIRED:
                     this.handleHumanInteraction(message.data);
                     break;
+                
+                case this.messageTypes.SUBSCRIBED:
+                    console.log('[WebSocket] Subscription confirmed for:', message.data);
+                    break;
                     
                 // Emit all messages as events
                 default:
+                    console.log(`[WebSocket] Emitting event: ${message.type}`, message.data);
                     this.emit(message.type, message.data);
             }
             
@@ -389,6 +402,7 @@ class FlowScriptWebSocket extends EventTarget {
     setDebug(enabled) {
         this.debug = enabled;
         localStorage.setItem('flowscript-debug-ws', enabled ? 'true' : 'false');
+        console.log(`[FlowScriptWS] Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     }
     
     // Get connection statistics

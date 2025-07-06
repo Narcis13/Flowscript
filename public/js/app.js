@@ -436,6 +436,17 @@ document.addEventListener('alpine:init', () => {
                     const data = await response.json();
                     this.store.workflows.executionId = data.executionId;
                     
+                    // Subscribe to WebSocket updates IMMEDIATELY
+                    if (this.wsClient && this.wsClient.isConnected()) {
+                        this.wsClient.subscribe(data.executionId);
+                        console.log('Subscribed to execution updates:', data.executionId);
+                        
+                        // Small delay to ensure subscription is processed
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    } else {
+                        console.warn('WebSocket not connected, real-time updates unavailable');
+                    }
+                    
                     // Add initial event
                     this.addExecutionEvent('Workflow started', 'active');
                     this.store.addEvent('workflow_started', {
@@ -444,14 +455,6 @@ document.addEventListener('alpine:init', () => {
                     });
                     
                     this.notify('Workflow execution started', 'success');
-                    
-                    // Subscribe to WebSocket updates for this execution
-                    if (this.wsClient && this.wsClient.isConnected()) {
-                        this.wsClient.subscribe(data.executionId);
-                        console.log('Subscribed to execution updates:', data.executionId);
-                    } else {
-                        console.warn('WebSocket not connected, real-time updates unavailable');
-                    }
                 } else {
                     const error = await response.json();
                     throw new Error(error.message || 'Execution failed');

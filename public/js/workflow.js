@@ -19,6 +19,11 @@ document.addEventListener('alpine:init', () => {
         completedNodes: new Set(),
         failedNodes: new Set(),
         
+        // Ensure executionId is always synced with parent
+        get executionId() {
+            return this.$root.executionId || this.store?.workflows?.executionId || null;
+        },
+        
         // File upload handling
         handleFileUpload(event) {
             const file = event.target.files[0];
@@ -186,8 +191,67 @@ document.addEventListener('alpine:init', () => {
                 status: 'active'
             });
             
-            // Call original execute method
-            await this.executeWorkflow();
+            // Call the parent's execute method
+            if (this.$root.executeWorkflow) {
+                await this.$root.executeWorkflow();
+            } else {
+                // Fallback: execute workflow directly
+                await this.executeWorkflowDirect();
+            }
+            
+            // Ensure event listeners are set up for the new execution
+            this.setupWebSocketListeners();
+        },
+        
+        // Direct workflow execution (fallback)
+        async executeWorkflowDirect() {
+            if (!this.selectedWorkflow) return;
+            
+            try {
+                // Parse initial state
+                let initialInput = {};
+                try {
+                    initialInput = JSON.parse(this.initialState);
+                } catch (e) {
+                    this.notify('Invalid JSON in initial state', 'danger');
+                    return;
+                }
+                
+                this.store.workflows.executing = true;
+                
+                const response = await fetch(`/workflows/${this.selectedWorkflow}/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ initialInput })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    this.store.workflows.executionId = data.executionId;
+                    
+                    // Subscribe to WebSocket updates IMMEDIATELY
+                    if (window.wsClient && window.wsClient.isConnected()) {
+                        window.wsClient.subscribe(data.executionId);
+                        console.log('Subscribed to execution updates:', data.executionId);
+                        
+                        // Small delay to ensure subscription is processed
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    } else {
+                        console.warn('WebSocket not connected, real-time updates unavailable');
+                    }
+                    
+                    this.notify('Workflow execution started', 'success');
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Execution failed');
+                }
+            } catch (error) {
+                console.error('Failed to execute workflow:', error);
+                this.notify(`Failed to execute workflow: ${error.message}`, 'danger');
+                this.store.workflows.executing = false;
+            }
         },
         
         // Add timeline event
@@ -361,82 +425,122 @@ document.addEventListener('alpine:init', () => {
             this.selectedWorkflow = this.$root.selectedWorkflow || '';
             this.initialState = this.$root.initialState || '{}';
             this.executionEvents = this.$root.executionEvents || [];
-            this.executionId = this.$root.executionId || null;
             this.executing = this.$root.executing || false;
             this.store = this.$root.store || Alpine.store('flowscript');
-            this.notify = this.$root.notify || ((msg, type) => console.log(msg));
+            this.notify = this.$root.notify || ((msg) => console.log(msg));
             
-            // Listen for WebSocket events
-            if (window.wsClient) {
-                window.wsClient.addEventListener('node_started', (event) => {
-                    if (event.detail.executionId === this.executionId) {
-                        this.updateNodeStatus(event.detail.nodeId, 'active');
-                        this.addTimelineEvent({
-                            type: 'node_start',
-                            message: `Node "${event.detail.nodeName}" started`,
-                            timestamp: new Date(),
-                            status: 'active',
-                            nodeId: event.detail.nodeId
-                        });
+            // Set up WebSocket event listeners (deferred to ensure WebSocket is ready)
+            this.setupWebSocketListeners();
+            
+            // If WebSocket isn't ready yet, wait for it
+            if (!window.wsClient) {
+                const checkInterval = setInterval(() => {
+                    if (window.wsClient) {
+                        clearInterval(checkInterval);
+                        this.setupWebSocketListeners();
                     }
-                });
-                
-                window.wsClient.addEventListener('node_completed', (event) => {
-                    if (event.detail.executionId === this.executionId) {
-                        this.updateNodeStatus(event.detail.nodeId, 'completed');
-                        this.addTimelineEvent({
-                            type: 'node_complete',
-                            message: `Node "${event.detail.nodeName}" completed`,
-                            timestamp: new Date(),
-                            status: 'success',
-                            nodeId: event.detail.nodeId
-                        });
-                    }
-                });
-                
-                window.wsClient.addEventListener('node_failed', (event) => {
-                    if (event.detail.executionId === this.executionId) {
-                        this.updateNodeStatus(event.detail.nodeId, 'failed');
-                        this.addTimelineEvent({
-                            type: 'node_fail',
-                            message: `Node "${event.detail.nodeName}" failed: ${event.detail.error}`,
-                            timestamp: new Date(),
-                            status: 'danger',
-                            nodeId: event.detail.nodeId,
-                            error: event.detail.error
-                        });
-                    }
-                });
-                
-                window.wsClient.addEventListener('workflow_completed', (event) => {
-                    if (event.detail.executionId === this.executionId) {
-                        this.addTimelineEvent({
-                            type: 'workflow_complete',
-                            message: 'Workflow completed successfully',
-                            timestamp: new Date(),
-                            status: 'success'
-                        });
-                        // Update execution status
-                        this.store.workflows.executing = false;
-                        this.notify('Workflow completed successfully', 'success');
-                    }
-                });
-                
-                window.wsClient.addEventListener('workflow_failed', (event) => {
-                    if (event.detail.executionId === this.executionId) {
-                        this.addTimelineEvent({
-                            type: 'workflow_fail',
-                            message: `Workflow failed: ${event.detail.error}`,
-                            timestamp: new Date(),
-                            status: 'danger',
-                            error: event.detail.error
-                        });
-                        // Update execution status
-                        this.store.workflows.executing = false;
-                        this.notify(`Workflow failed: ${event.detail.error}`, 'danger');
-                    }
-                });
+                }, 100);
             }
+        },
+        
+        // Set up WebSocket event listeners
+        setupWebSocketListeners() {
+            if (!window.wsClient || this._listenersSetup) return;
+            this._listenersSetup = true;
+            
+            // Node lifecycle events
+            window.wsClient.addEventListener('node_started', (event) => {
+                console.log('[WorkflowExecutor] node_started event received:', event.detail);
+                const currentExecutionId = this.executionId || this.$root.executionId;
+                console.log('[WorkflowExecutor] Current execution ID:', currentExecutionId, 'Event execution ID:', event.detail.executionId);
+                
+                if (event.detail.executionId === currentExecutionId) {
+                    console.log('[WorkflowExecutor] Processing node_started for our execution');
+                    this.updateNodeStatus(event.detail.nodeId, 'active');
+                    this.addTimelineEvent({
+                        type: 'node_start',
+                        message: `Node "${event.detail.nodeName}" started`,
+                        timestamp: new Date(),
+                        status: 'active',
+                        nodeId: event.detail.nodeId
+                    });
+                }
+            });
+            
+            window.wsClient.addEventListener('node_completed', (event) => {
+                if (event.detail.executionId === this.executionId || event.detail.executionId === this.$root.executionId) {
+                    this.updateNodeStatus(event.detail.nodeId, 'completed');
+                    this.addTimelineEvent({
+                        type: 'node_complete',
+                        message: `Node "${event.detail.nodeName}" completed`,
+                        timestamp: new Date(),
+                        status: 'success',
+                        nodeId: event.detail.nodeId
+                    });
+                }
+            });
+            
+            window.wsClient.addEventListener('node_failed', (event) => {
+                if (event.detail.executionId === this.executionId || event.detail.executionId === this.$root.executionId) {
+                    this.updateNodeStatus(event.detail.nodeId, 'failed');
+                    this.addTimelineEvent({
+                        type: 'node_fail',
+                        message: `Node "${event.detail.nodeName}" failed: ${event.detail.error}`,
+                        timestamp: new Date(),
+                        status: 'danger',
+                        nodeId: event.detail.nodeId,
+                        error: event.detail.error
+                    });
+                }
+            });
+            
+            // Workflow lifecycle events
+            window.wsClient.addEventListener('workflow_started', (event) => {
+                if (event.detail.executionId === this.executionId || event.detail.executionId === this.$root.executionId) {
+                    this.addTimelineEvent({
+                        type: 'workflow_start',
+                        message: 'Workflow started',
+                        timestamp: new Date(),
+                        status: 'active'
+                    });
+                }
+            });
+            
+            window.wsClient.addEventListener('workflow_completed', (event) => {
+                if (event.detail.executionId === this.executionId || event.detail.executionId === this.$root.executionId) {
+                    this.addTimelineEvent({
+                        type: 'workflow_complete',
+                        message: 'Workflow completed successfully',
+                        timestamp: new Date(),
+                        status: 'success'
+                    });
+                    // Update execution status
+                    this.store.workflows.executing = false;
+                    this.notify('Workflow completed successfully', 'success');
+                }
+            });
+            
+            window.wsClient.addEventListener('workflow_failed', (event) => {
+                if (event.detail.executionId === this.executionId || event.detail.executionId === this.$root.executionId) {
+                    this.addTimelineEvent({
+                        type: 'workflow_fail',
+                        message: `Workflow failed: ${event.detail.error}`,
+                        timestamp: new Date(),
+                        status: 'danger',
+                        error: event.detail.error
+                    });
+                    // Update execution status
+                    this.store.workflows.executing = false;
+                    this.notify(`Workflow failed: ${event.detail.error}`, 'danger');
+                }
+            });
+            
+            // Watch for execution ID changes and re-check bindings
+            this.$watch('executionId', (newId) => {
+                if (newId) {
+                    this.executionId = newId;
+                }
+            });
         }
     }));
 });

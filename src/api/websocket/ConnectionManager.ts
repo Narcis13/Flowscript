@@ -91,6 +91,12 @@ export class ConnectionManager {
 
   public broadcastToExecution(executionId: string, message: string): void {
     const subscribers = this.getSubscribersForExecution(executionId);
+    if (subscribers.length === 0) {
+      console.log(`No subscribers for execution ${executionId} - message not sent`);
+      return;
+    }
+    
+    console.log(`Broadcasting to ${subscribers.length} subscriber(s) for execution ${executionId}`);
     subscribers.forEach(ws => {
       try {
         ws.send(message);

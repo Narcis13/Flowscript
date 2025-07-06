@@ -104,11 +104,11 @@ export class ExecutionManager extends EventEmitter {
     // This gives EventBridge time to attach
     this.emit('execution_started', executionId);
 
-    // Start execution asynchronously with a small delay
-    // This ensures EventBridge has time to attach
+    // Start execution asynchronously with a delay
+    // This ensures EventBridge has time to attach and clients can subscribe
     setTimeout(() => {
       this.executeWorkflow(executionId, initialInput);
-    }, 10);
+    }, 100); // Increased from 10ms to 100ms to allow WebSocket subscription
 
     return executionId;
   }

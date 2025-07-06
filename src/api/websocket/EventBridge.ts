@@ -118,17 +118,17 @@ export class EventBridge {
       case 'node:executing':
         return createMessage('node_started', {
           executionId,
-          nodeId: event.nodeId || event.data?.nodeId,
-          nodeName: event.nodeName || event.data?.nodeName,
+          nodeId: event.data?.nodeId || event.nodeId,
+          nodeName: event.data?.nodeName || event.nodeName,
           timestamp: event.timestamp
         });
 
       case 'node:completed':
         return createMessage('node_completed', {
           executionId,
-          nodeId: event.nodeId || event.data?.nodeId,
-          nodeName: event.nodeName || event.data?.nodeName,
-          edge: event.edge || event.data?.edge,
+          nodeId: event.data?.nodeId || event.nodeId,
+          nodeName: event.data?.nodeName || event.nodeName,
+          edge: event.data?.edge || event.edge,
           data: event.data?.edgeData || event.data,
           timestamp: event.timestamp
         });
@@ -136,9 +136,9 @@ export class EventBridge {
       case 'node:failed':
         return createMessage('node_failed', {
           executionId,
-          nodeId: event.nodeId || event.data?.nodeId,
-          nodeName: event.nodeName || event.data?.nodeName,
-          error: event.error || event.data?.error,
+          nodeId: event.data?.nodeId || event.nodeId,
+          nodeName: event.data?.nodeName || event.nodeName,
+          error: event.data?.error || event.error,
           timestamp: event.timestamp
         });
 

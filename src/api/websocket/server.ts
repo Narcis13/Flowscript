@@ -39,7 +39,10 @@ export class FlowScriptWebSocketServer {
       // Handle incoming messages
       ws.on('message', async (data: Buffer) => {
         try {
-          const message = parseMessage(data.toString());
+          const rawMessage = data.toString();
+          console.log(`[WebSocket] Raw message from ${clientId}:`, rawMessage);
+          const message = parseMessage(rawMessage);
+          console.log(`[WebSocket] Parsed message - type: ${message.type}, data:`, message.data);
           await this.handleMessage(clientId, message);
         } catch (error) {
           console.error(`Error handling message from ${clientId}:`, error);
@@ -76,6 +79,7 @@ export class FlowScriptWebSocketServer {
     switch (message.type) {
       case 'subscribe':
         if (message.data.executionId) {
+          console.log(`Client ${clientId} subscribing to execution ${message.data.executionId}`);
           this.connectionManager.subscribe(clientId, message.data.executionId);
           ws.send(JSON.stringify(createMessage('subscribed', {
             executionId: message.data.executionId
@@ -86,6 +90,10 @@ export class FlowScriptWebSocketServer {
           if (status) {
             ws.send(JSON.stringify(createMessage('execution_status', status)));
           }
+          
+          // Log subscription count
+          const subCount = this.connectionManager.getSubscriptionCount(message.data.executionId);
+          console.log(`Execution ${message.data.executionId} now has ${subCount} subscriber(s)`);
         }
         break;
 

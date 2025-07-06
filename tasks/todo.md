@@ -131,6 +131,23 @@
   - Counter increments work as expected
   - Debug logs show actual values instead of template placeholders
 
+## Recent Updates (Frontend Stability Fixes - July 6, 2025)
+### Fixed Critical Frontend Issues
+- **WebSocket Event Timing Fix**: Resolved issue where UI wouldn't update on first workflow execution
+  - Separated event listener setup into reusable method
+  - Added deferred initialization for WebSocket readiness
+  - Ensured proper executionId synchronization between components
+- **Timeline Overflow Fix**: Resolved event timeline overlapping footer
+  - Implemented proper flexbox layout structure
+  - Added viewport-based height constraints
+  - Fixed z-index layering for footer visibility
+  - Ensured opaque footer backgrounds in all themes
+- **Race Condition Fix**: Resolved workflow completing before WebSocket subscription
+  - Increased ExecutionManager delay from 10ms to 100ms
+  - Frontend subscribes immediately after receiving executionId
+  - Added 50ms frontend delay to ensure subscription is processed
+- **Documentation**: Created frontend-fixes.md documenting the issues and solutions
+
 ## Recent Updates (Frontend Implementation and Workflow Loading - January 6, 2025)
 ### Frontend Testing Interface
 - **Created comprehensive SPA with AlpineJS and Bulma CSS**: Full-featured interface for testing workflows

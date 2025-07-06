@@ -842,7 +842,7 @@ body {
 /* ===========================
    Layout Fixes for Footer Overlap
    =========================== */
-html, body {
+html {
   height: 100%;
 }
 
@@ -850,61 +850,86 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-/* Main content should grow and be scrollable */
-.section.is-flex-grow-1 {
+/* Main app container should flex properly */
+body > div[x-data="flowscriptApp"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main content area with proper padding */
+main.section {
   flex: 1 0 auto;
+  padding-bottom: 1rem; /* Reduced to prevent too much space */
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Tab panels should be scrollable and contained */
-.tab-content {
-  height: calc(100vh - 200px); /* Adjust for navbar and footer */
+/* Container should not overflow */
+main .container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-.tab-content > div[x-show] {
-  height: 100%;
+/* Content wrapper */
+main .content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab panels should be contained */
+.content > div[x-show] {
+  flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 2rem;
+  max-height: calc(100vh - 250px); /* Account for navbar + footer */
 }
 
-/* Ensure footer stays at bottom */
+/* Ensure footer stays at bottom and above content */
 .footer {
   flex-shrink: 0;
   margin-top: auto;
+  position: relative;
+  z-index: 40; /* Above timeline content */
+  background-color: var(--light-bg); /* Ensure opaque background */
+}
+
+[data-theme="dark"] .footer {
+  background-color: var(--dark-surface) !important;
 }
 
 /* Fix timeline container specifically */
 .workflow-timeline.custom-scrollbar {
-  max-height: 400px !important;
+  max-height: 350px !important; /* Reduced height */
   overflow-y: auto !important;
   overflow-x: hidden !important;
   position: relative !important;
+  margin-bottom: 1rem;
 }
 
-/* Timeline overflow fixes */
-.box:has(.workflow-timeline) {
-  max-height: 500px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Fallback for browsers without :has() support */
+/* Timeline box constraints */
 .execution-timeline-box {
-  max-height: 500px !important;
+  max-height: 450px !important; /* Reduced from 500px */
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
+  margin-bottom: 1.5rem !important; /* Add space before next element */
 }
 
-.box .title {
+/* Ensure proper flex layout inside box */
+.execution-timeline-box .title {
   flex-shrink: 0;
+  margin-bottom: 1rem;
 }
 
 /* Ensure timeline items don't overflow */
@@ -912,6 +937,7 @@ body {
   word-wrap: break-word;
   overflow-wrap: break-word;
   margin-right: 1rem;
+  margin-bottom: 1rem; /* Reduced spacing */
 }
 
 .timeline-content {
@@ -922,7 +948,7 @@ body {
 .timeline-content p {
   word-break: break-word;
   white-space: normal;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0; /* Reduced margin */
 }
 
 /* Fix long node IDs */
@@ -931,4 +957,48 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: inline-block;
+}
+
+/* Columns should handle overflow properly */
+.columns {
+  margin-bottom: 1rem;
+}
+
+.column {
+  overflow: visible; /* Allow dropdowns to show */
+}
+
+/* Box margins for spacing */
+.box {
+  margin-bottom: 1.5rem;
+}
+
+/* Notification positioning fix */
+.notification-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 400px;
+  pointer-events: none; /* Allow clicks through container */
+}
+
+.notification-container .notification {
+  pointer-events: auto; /* But allow clicks on notifications */
+}
+
+/* Mobile responsive adjustments */
+@media screen and (max-width: 768px) {
+  .content > div[x-show] {
+    max-height: calc(100vh - 200px); /* Less space needed on mobile */
+  }
+  
+  .workflow-timeline.custom-scrollbar {
+    max-height: 300px !important;
+  }
+  
+  .execution-timeline-box {
+    max-height: 350px !important;
+  }
 }
