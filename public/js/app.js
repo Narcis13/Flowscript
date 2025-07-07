@@ -294,18 +294,24 @@ document.addEventListener('alpine:init', () => {
         
         // Initialize WebSocket connection
         initializeWebSocket() {
-            console.log('Initializing WebSocket connection...');
+            console.log('Initializing Enhanced WebSocket connection...');
             
-            // Create WebSocket client
-            const wsClient = new FlowScriptWebSocket();
+            // Create enhanced WebSocket client if available, fallback to regular
+            const wsClient = window.EnhancedFlowScriptWebSocket 
+                ? new EnhancedFlowScriptWebSocket() 
+                : new FlowScriptWebSocket();
             
             // Enable debug if in debug mode
             if (this.store.preferences.debugEnabled) {
                 wsClient.setDebug(true);
             }
             
-            // Integrate with Alpine store
-            integrateWebSocketWithStore(wsClient);
+            // Integrate with Alpine store - use enhanced integration if available
+            if (window.enhancedIntegrateWebSocketWithStore && window.EnhancedFlowScriptWebSocket) {
+                enhancedIntegrateWebSocketWithStore(wsClient);
+            } else {
+                integrateWebSocketWithStore(wsClient);
+            }
             
             // Additional event handlers for UI updates
             wsClient.addEventListener('workflow_started', (event) => {
@@ -424,6 +430,21 @@ document.addEventListener('alpine:init', () => {
                 this.store.workflows.executing = true;
                 this.executionEvents = [];
                 
+                // Check if we have enhanced execution available
+                if (this.store.executeWorkflowEnhanced) {
+                    // Use enhanced execution with pre-subscription
+                    const workflow = this.workflows.find(w => w.id === this.selectedWorkflow);
+                    if (workflow) {
+                        await this.store.executeWorkflowEnhanced(workflow, initialInput);
+                        this.executionId = this.store.executionId;
+                        
+                        // Add initial event
+                        this.addExecutionEvent('Workflow started with pre-subscription', 'active');
+                        return;
+                    }
+                }
+                
+                // Fallback to regular execution
                 const response = await fetch(`/workflows/${this.selectedWorkflow}/execute`, {
                     method: 'POST',
                     headers: {
@@ -435,9 +456,22 @@ document.addEventListener('alpine:init', () => {
                 if (response.ok) {
                     const data = await response.json();
                     this.store.workflows.executionId = data.executionId;
+                    this.executionId = data.executionId;
                     
-                    // Subscribe to WebSocket updates IMMEDIATELY
-                    if (this.wsClient && this.wsClient.isConnected()) {
+                    // Try pre-subscription if available
+                    if (this.wsClient && this.wsClient.preSubscribe) {
+                        try {
+                            await this.wsClient.preSubscribe(data.executionId);
+                            console.log('Pre-subscribed to execution updates:', data.executionId);
+                        } catch (error) {
+                            console.warn('Pre-subscription failed, falling back to regular subscription:', error);
+                            // Fallback to regular subscription
+                            if (this.wsClient && this.wsClient.isConnected()) {
+                                this.wsClient.subscribe(data.executionId);
+                            }
+                        }
+                    } else if (this.wsClient && this.wsClient.isConnected()) {
+                        // Regular subscription
                         this.wsClient.subscribe(data.executionId);
                         console.log('Subscribed to execution updates:', data.executionId);
                         

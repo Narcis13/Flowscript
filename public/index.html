@@ -388,38 +388,136 @@
                     </div>
 
                     <!-- HITL Testing Tab -->
-                    <div x-show="activeTab === 'hitl'" x-transition>
+                    <div x-show="activeTab === 'hitl'" x-transition x-data="hitlHandler">
                         <h1 class="title">Human-in-the-Loop Testing</h1>
                         <p class="subtitle">Interact with workflows requiring human input</p>
                         
                         <div class="columns">
+                            <!-- Pending Interactions Column -->
                             <div class="column is-4">
                                 <div class="box">
-                                    <h2 class="title is-5">Pending Interactions</h2>
+                                    <h2 class="title is-5">
+                                        Pending Interactions
+                                        <span class="tag is-warning" x-show="pendingInteractions.length > 0" x-text="pendingInteractions.length"></span>
+                                    </h2>
+                                    
+                                    <!-- Test Button -->
+                                    <button class="button is-small is-info is-fullwidth mb-3" 
+                                            @click="window.FlowScriptHITL.createTestInteraction()">
+                                        <span class="icon">
+                                            <i class="fas fa-flask"></i>
+                                        </span>
+                                        <span>Create Test Interaction</span>
+                                    </button>
+                                    
                                     <div class="content">
                                         <template x-for="interaction in pendingInteractions" :key="interaction.id">
-                                            <div class="notification is-warning is-light">
-                                                <p class="has-text-weight-bold" x-text="interaction.nodeName"></p>
-                                                <p class="is-size-7" x-text="interaction.workflowId"></p>
-                                                <button class="button is-small is-warning mt-2" 
-                                                        @click="selectInteraction(interaction)">
-                                                    Respond
-                                                </button>
+                                            <div class="card mb-3">
+                                                <div class="card-content">
+                                                    <div class="media">
+                                                        <div class="media-content">
+                                                            <p class="title is-6" x-text="interaction.nodeName"></p>
+                                                            <p class="subtitle is-7">
+                                                                <span class="tag" :class="getInteractionBadgeClass(interaction)" x-text="interaction.status"></span>
+                                                                <span class="is-size-7 has-text-grey ml-2" x-text="new Date(interaction.timestamp).toLocaleTimeString()"></span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Timeout display -->
+                                                    <div x-show="interaction.timeout && interaction.status === 'pending'" class="mb-2">
+                                                        <p class="is-size-7">
+                                                            <span class="icon has-text-warning">
+                                                                <i class="fas fa-clock"></i>
+                                                            </span>
+                                                            Timeout: <span x-text="formatRemainingTime(interaction.remainingTime)"></span>
+                                                        </p>
+                                                    </div>
+                                                    
+                                                    <!-- Context preview -->
+                                                    <div x-show="interaction.contextData && Object.keys(interaction.contextData).length > 0" class="mb-2">
+                                                        <details>
+                                                            <summary class="is-size-7 has-text-grey">Context Data</summary>
+                                                            <pre class="is-size-7" x-text="JSON.stringify(interaction.contextData, null, 2)"></pre>
+                                                        </details>
+                                                    </div>
+                                                    
+                                                    <button class="button is-small is-warning is-fullwidth" 
+                                                            @click="selectInteraction(interaction)"
+                                                            :disabled="interaction.status !== 'pending' || activeInteraction?.id === interaction.id">
+                                                        <span class="icon">
+                                                            <i class="fas fa-edit"></i>
+                                                        </span>
+                                                        <span x-text="activeInteraction?.id === interaction.id ? 'Currently Active' : 'Respond'"></span>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </template>
-                                        <p x-show="pendingInteractions.length === 0" class="has-text-grey">
+                                        
+                                        <p x-show="pendingInteractions.length === 0" class="has-text-grey has-text-centered">
+                                            <span class="icon is-large">
+                                                <i class="fas fa-inbox fa-2x"></i>
+                                            </span>
+                                            <br>
                                             No pending interactions
                                         </p>
                                     </div>
                                 </div>
                             </div>
                             
+                            <!-- Active Interaction Form Column -->
                             <div class="column is-8">
-                                <div class="box" x-show="selectedInteraction">
-                                    <h2 class="title is-5">Interaction Form</h2>
-                                    <div id="interaction-form-container">
-                                        <!-- Dynamic form will be rendered here -->
+                                <div class="box" x-show="activeInteraction">
+                                    <h2 class="title is-5">
+                                        <span x-text="activeInteraction?.nodeName"></span>
+                                        <button class="delete is-pulled-right" @click="cancelInteraction()"></button>
+                                    </h2>
+                                    
+                                    <!-- Execution Info -->
+                                    <div class="tags has-addons mb-4">
+                                        <span class="tag is-dark">Execution</span>
+                                        <span class="tag is-info" x-text="activeInteraction?.executionId"></span>
                                     </div>
+                                    
+                                    <!-- Dynamic Form Container -->
+                                    <div x-data="formGenerator" x-init="init(activeInteraction?.schema, activeInteraction?.uiSchema, formData)">
+                                        <form @submit.prevent="submitResponse()">
+                                            <div x-html="generateForm()"></div>
+                                            
+                                            <!-- Form Actions -->
+                                            <div class="field is-grouped mt-5">
+                                                <div class="control">
+                                                    <button type="submit" 
+                                                            class="button is-primary" 
+                                                            :class="{'is-loading': submitting}"
+                                                            :disabled="submitting">
+                                                        <span class="icon">
+                                                            <i class="fas fa-check"></i>
+                                                        </span>
+                                                        <span>Submit Response</span>
+                                                    </button>
+                                                </div>
+                                                <div class="control">
+                                                    <button type="button" 
+                                                            class="button is-light" 
+                                                            @click="cancelInteraction()"
+                                                            :disabled="submitting">
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <!-- No Active Interaction -->
+                                <div class="box has-text-centered" x-show="!activeInteraction">
+                                    <span class="icon is-large has-text-grey-light">
+                                        <i class="fas fa-hand-pointer fa-3x"></i>
+                                    </span>
+                                    <p class="has-text-grey mt-4">
+                                        Select a pending interaction from the left to respond
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -528,39 +626,231 @@
                     </div>
 
                     <!-- Debugger Tab -->
-                    <div x-show="activeTab === 'debugger'" x-transition>
+                    <div x-show="activeTab === 'debugger'" x-transition x-data="stateDebugger">
                         <h1 class="title">State Debugger</h1>
                         <p class="subtitle">Inspect and debug workflow state</p>
                         
-                        <div class="columns">
-                            <div class="column is-6">
-                                <div class="box">
-                                    <h2 class="title is-5">Current State</h2>
-                                    <pre class="json-viewer custom-scrollbar" 
-                                         x-text="JSON.stringify(currentState, null, 2)"></pre>
-                                </div>
-                            </div>
-                            <div class="column is-6">
-                                <div class="box">
-                                    <h2 class="title is-5">State History</h2>
-                                    <div class="field">
-                                        <label class="label">Select State Version</label>
-                                        <div class="control">
-                                            <div class="select is-fullwidth">
-                                                <select x-model="selectedStateVersion">
-                                                    <template x-for="(state, index) in stateHistory" :key="index">
-                                                        <option :value="index" x-text="`Version ${index + 1} - ${state.timestamp}`"></option>
-                                                    </template>
-                                                </select>
-                                            </div>
-                                        </div>
+                        <!-- Controls -->
+                        <div class="box mb-4">
+                            <div class="level">
+                                <div class="level-left">
+                                    <div class="level-item">
+                                        <button class="button is-primary" @click="captureState()">
+                                            <span class="icon">
+                                                <i class="fas fa-camera"></i>
+                                            </span>
+                                            <span>Capture State</span>
+                                        </button>
                                     </div>
-                                    <pre class="json-viewer custom-scrollbar mt-4" 
-                                         x-show="selectedStateVersion !== null"
-                                         x-text="JSON.stringify(stateHistory[selectedStateVersion]?.state || {}, null, 2)"></pre>
+                                    <div class="level-item">
+                                        <button class="button is-info" @click="captureState(window.FlowScriptStateDebugger.createTestState(), 'Test State')">
+                                            <span class="icon">
+                                                <i class="fas fa-flask"></i>
+                                            </span>
+                                            <span>Test State</span>
+                                        </button>
+                                    </div>
+                                    <div class="level-item">
+                                        <label class="checkbox">
+                                            <input type="checkbox" x-model="autoCapture">
+                                            Auto-capture state updates
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-warning" @click="toggleCompareMode()">
+                                            <span class="icon">
+                                                <i class="fas fa-code-compare"></i>
+                                            </span>
+                                            <span x-text="compareMode ? 'Exit Compare' : 'Compare'"></span>
+                                        </button>
+                                    </div>
+                                    <div class="level-item">
+                                        <button class="button is-danger is-light" @click="clearHistory()">
+                                            <span class="icon">
+                                                <i class="fas fa-trash"></i>
+                                            </span>
+                                            <span>Clear History</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                        
+                        <div class="columns">
+                            <!-- State History Column -->
+                            <div class="column is-4">
+                                <div class="box">
+                                    <h2 class="title is-5">
+                                        State History
+                                        <span class="tag is-info" x-text="stateHistory.length"></span>
+                                    </h2>
+                                    
+                                    <div class="content" style="max-height: 600px; overflow-y: auto;">
+                                        <template x-for="(snapshot, index) in stateHistory" :key="snapshot.id">
+                                            <div class="card mb-2" 
+                                                 :class="{'has-background-primary-light': selectedIndex === index}"
+                                                 style="cursor: pointer;"
+                                                 @click="selectState(index)">
+                                                <div class="card-content">
+                                                    <p class="title is-6" x-text="snapshot.label"></p>
+                                                    <p class="subtitle is-7">
+                                                        <span x-text="formatTimestamp(snapshot.timestamp)"></span>
+                                                        <br>
+                                                        <span class="tag is-small" x-text="formatSize(snapshot.size)"></span>
+                                                    </p>
+                                                    
+                                                    <!-- Compare mode selection -->
+                                                    <div x-show="compareMode" class="field is-grouped mt-2">
+                                                        <div class="control">
+                                                            <label class="radio">
+                                                                <input type="radio" 
+                                                                       :name="'compare-from'"
+                                                                       @change="setCompareIndices(index, compareToIndex)"
+                                                                       :checked="compareFromIndex === index">
+                                                                From
+                                                            </label>
+                                                        </div>
+                                                        <div class="control">
+                                                            <label class="radio">
+                                                                <input type="radio" 
+                                                                       :name="'compare-to'"
+                                                                       @change="setCompareIndices(compareFromIndex, index)"
+                                                                       :checked="compareToIndex === index">
+                                                                To
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <!-- Actions -->
+                                                    <div class="buttons are-small mt-2">
+                                                        <button class="button is-small is-light" @click.stop="exportState(index)">
+                                                            <span class="icon">
+                                                                <i class="fas fa-download"></i>
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        
+                                        <p x-show="stateHistory.length === 0" class="has-text-grey has-text-centered">
+                                            No state history yet
+                                        </p>
+                                    </div>
+                                    
+                                    <!-- Import -->
+                                    <div class="field mt-4">
+                                        <div class="file is-small is-fullwidth">
+                                            <label class="file-label">
+                                                <input class="file-input" type="file" accept=".json" 
+                                                       @change="importState($event.target.files[0])">
+                                                <span class="file-cta">
+                                                    <span class="file-icon">
+                                                        <i class="fas fa-upload"></i>
+                                                    </span>
+                                                    <span class="file-label">
+                                                        Import State
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- State View Column -->
+                            <div class="column is-8">
+                                <!-- Filter -->
+                                <div class="field mb-4">
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="text" 
+                                               placeholder="Filter by path (e.g., variables.user.name)"
+                                               x-model="filterPath">
+                                        <span class="icon is-left">
+                                            <i class="fas fa-filter"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Compare Mode Diff View -->
+                                <div x-show="compareMode && stateDiff" class="box">
+                                    <h2 class="title is-5">State Diff</h2>
+                                    
+                                    <div class="tabs">
+                                        <ul>
+                                            <li :class="{'is-active': diffTab === 'all'}">
+                                                <a @click="diffTab = 'all'">All Changes</a>
+                                            </li>
+                                            <li :class="{'is-active': diffTab === 'added'}">
+                                                <a @click="diffTab = 'added'">
+                                                    Added 
+                                                    <span class="tag is-success is-small" x-text="Object.keys(stateDiff.added).length"></span>
+                                                </a>
+                                            </li>
+                                            <li :class="{'is-active': diffTab === 'changed'}">
+                                                <a @click="diffTab = 'changed'">
+                                                    Changed 
+                                                    <span class="tag is-warning is-small" x-text="Object.keys(stateDiff.changed).length"></span>
+                                                </a>
+                                            </li>
+                                            <li :class="{'is-active': diffTab === 'removed'}">
+                                                <a @click="diffTab = 'removed'">
+                                                    Removed 
+                                                    <span class="tag is-danger is-small" x-text="Object.keys(stateDiff.removed).length"></span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="content">
+                                        <pre class="json-viewer custom-scrollbar" x-show="diffTab === 'all' || diffTab === 'added'"
+                                             x-html="JSON.stringify(stateDiff.added, null, 2)"></pre>
+                                        <pre class="json-viewer custom-scrollbar" x-show="diffTab === 'all' || diffTab === 'changed'"
+                                             x-html="JSON.stringify(stateDiff.changed, null, 2)"></pre>
+                                        <pre class="json-viewer custom-scrollbar" x-show="diffTab === 'all' || diffTab === 'removed'"
+                                             x-html="JSON.stringify(stateDiff.removed, null, 2)"></pre>
+                                    </div>
+                                </div>
+                                
+                                <!-- Normal State View -->
+                                <div x-show="!compareMode || !stateDiff" class="box">
+                                    <h2 class="title is-5">
+                                        Current State
+                                        <button class="button is-small is-pulled-right" @click="exportState()">
+                                            <span class="icon">
+                                                <i class="fas fa-download"></i>
+                                            </span>
+                                            <span>Export</span>
+                                        </button>
+                                    </h2>
+                                    
+                                    <!-- Tree View Toggle -->
+                                    <div class="tabs">
+                                        <ul>
+                                            <li :class="{'is-active': viewMode === 'tree'}">
+                                                <a @click="viewMode = 'tree'">Tree View</a>
+                                            </li>
+                                            <li :class="{'is-active': viewMode === 'json'}">
+                                                <a @click="viewMode = 'json'">JSON View</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Tree View -->
+                                    <div x-show="viewMode === 'tree'" class="state-tree" x-html="renderStateTree(filteredState)"></div>
+                                    
+                                    <!-- JSON View -->
+                                    <pre x-show="viewMode === 'json'" 
+                                         class="json-viewer custom-scrollbar" 
+                                         x-text="JSON.stringify(filteredState, null, 2)"></pre>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Initialize data -->
+                        <div x-init="diffTab = 'all'; viewMode = 'json'"></div>
                     </div>
                 </div>
             </div>
@@ -619,6 +909,10 @@
 
     <!-- Application Scripts -->
     <script src="/js/websocket.js"></script>
+    <script src="/js/websocket-enhanced.js"></script>
+    <script src="/js/form-generator.js"></script>
+    <script src="/js/hitl-handler.js"></script>
+    <script src="/js/state-debugger.js"></script>
     <script src="/js/workflow.js"></script>
     <script src="/js/app.js"></script>
 </body>
