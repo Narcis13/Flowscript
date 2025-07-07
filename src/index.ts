@@ -3,6 +3,11 @@
  * with human-in-the-loop capabilities
  */
 
+import * as dotenv from 'dotenv';
+
+// Load environment variables from .env file
+dotenv.config();
+
 export const VERSION = '0.1.0';
 
 // Core exports

@@ -14,6 +14,7 @@ import * as path from 'path';
 import { createExecuteRoute } from './routes/execute';
 import { createStatusRoute } from './routes/status';
 import { createResumeRoute } from './routes/resume';
+import { createGoogleAuthRoutes } from './routes/google-auth';
 
 /**
  * Create and configure the Hono app
@@ -84,6 +85,12 @@ export function createApp(): Hono {
           list: 'GET /executions',
           status: 'GET /executions/:executionId/status',
           resume: 'POST /executions/:executionId/resume'
+        },
+        auth: {
+          google: 'GET /api/auth/google',
+          callback: 'GET /api/auth/google/callback',
+          status: 'GET /api/auth/status',
+          profile: 'GET /api/auth/gmail/profile'
         }
       }
     });
@@ -127,6 +134,9 @@ export function createApp(): Hono {
   app.route('/workflows/:workflowId/execute', createExecuteRoute());
   app.route('/executions/:executionId/status', createStatusRoute());
   app.route('/executions/:executionId/resume', createResumeRoute());
+  
+  // Mount auth routes
+  app.route('/api/auth', createGoogleAuthRoutes());
 
   // Serve static files AFTER API routes
   // Manual static file serving for better control
