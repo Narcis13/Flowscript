@@ -210,3 +210,18 @@
   - Phase 13: Integration testing
   - Phase 14: Documentation
   - Phase 15: Enhancement features
+
+## Recent Updates (Workflow Execution Documentation - January 8, 2025)
+### Comprehensive Workflow Execution Documentation
+- **Created detailed workflow execution explainer**: `/docs/workflow-explainer.md`
+- **Documented entire execution chain**:
+  - Workflow JSON definition structure and FlowElement types
+  - WorkflowLoader loading and validation process
+  - Node registration and discovery via NodeRegistry
+  - WorkflowExecutor orchestration and execution flow
+  - Individual node execution with ExecutionContext
+  - StateManager JSONPath-based state management
+  - Event emission and Human-in-the-Loop mechanism
+- **Included complete execution example**: Step-by-step trace of workflow execution
+- **Documented key design principles**: Lazy evaluation, immutable state, event-driven architecture
+- **Added error handling documentation**: Multi-level error handling approach

@@ -30,6 +30,7 @@ import { approveExpense } from './human/approveExpense';
 import { formInput } from './human/formInput';
 import { reviewData } from './human/reviewData';
 import { googleConnect } from './custom/google/gmail/googleConnect';
+import { listEmails } from './custom/google/gmail/listEmails';
 /**
  * Register all nodes with the global registry
  */
@@ -67,6 +68,7 @@ export function registerAllNodes(): void {
   registry.registerInstance(formInput);
   registry.registerInstance(reviewData);
   registry.registerInstance(googleConnect);
+  registry.registerInstance(listEmails);
 }
 
 /**

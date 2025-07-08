@@ -11,6 +11,11 @@
       "email": "smupitesti2001@gmail.com"
     }
   },
+    {
+    "listEmails": {
+      "maxResults": 10
+    }
+  },
     {"setData": {"path": "$.greeting", "value": "Welcome to FlowScript CLI"}},
     {"logError": {"level": "info", "message": "Running Hello World workflow"}},
     {"delay": {"seconds": 1}},
