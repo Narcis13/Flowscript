@@ -29,7 +29,7 @@ import { forEach } from './controls/forEach';
 import { approveExpense } from './human/approveExpense';
 import { formInput } from './human/formInput';
 import { reviewData } from './human/reviewData';
-
+import { googleConnect } from './custom/google/gmail/googleConnect';
 /**
  * Register all nodes with the global registry
  */
@@ -66,6 +66,7 @@ export function registerAllNodes(): void {
   registry.registerInstance(approveExpense);
   registry.registerInstance(formInput);
   registry.registerInstance(reviewData);
+  registry.registerInstance(googleConnect);
 }
 
 /**
