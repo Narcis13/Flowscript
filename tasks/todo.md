@@ -225,3 +225,56 @@
 - **Included complete execution example**: Step-by-step trace of workflow execution
 - **Documented key design principles**: Lazy evaluation, immutable state, event-driven architecture
 - **Added error handling documentation**: Multi-level error handling approach
+
+## Recent Updates (Google Gmail Nodes Implementation - January 9, 2025)
+### New Gmail Action Nodes
+- **sendEmail**: Send emails through Gmail with subject, body, cc, bcc support
+- **getEmail**: Retrieve full email content by message ID with body extraction
+- **deleteEmail**: Move emails to trash by message ID
+- **markAsRead**: Mark emails as read by removing UNREAD label
+- **markAsUnread**: Mark emails as unread by adding UNREAD label
+- **searchEmails**: Advanced email search with Gmail query syntax and optional detail fetching
+
+### Implementation Details
+- **All nodes follow consistent pattern**: Check for access token, validate config, execute Gmail API call
+- **Error handling**: Proper edge routing for success, error, not_found, and config_error cases
+- **State tracking**: Each node updates state with operation results for debugging
+- **OAuth2 integration**: All nodes use the stored Google access token from googleConnect node
+
+### Example Workflows Created
+- **gmail-management.json**: Demonstrates searching for unread emails, processing urgent ones, and sending notifications
+- **email-automation.json**: Shows batch processing of emails based on search criteria with conditional actions
+
+### Node Library Status Update
+- **Total Action Nodes**: 20 (added 6 Gmail nodes)
+- **Total Control Nodes**: 2
+- **Total Human Nodes**: 3
+- **Total Custom Nodes**: 8 (Google/Gmail nodes)
+
+## Recent Updates (Google Drive Nodes Implementation - January 9, 2025)
+### New Google Drive Action Nodes
+- **listFiles**: List files and folders with filtering options (folder, name, mime type)
+- **uploadFile**: Upload files from path or content with folder destination support
+- **downloadFile**: Download files to path or get content, handles Google Docs export
+- **createFolder**: Create folders with parent folder support
+- **deleteFile**: Permanently delete files or folders
+- **shareFile**: Share files with users or publicly, manage permissions
+- **searchFiles**: Advanced file search using Drive query syntax
+- **getFileMetadata**: Get comprehensive file metadata including permissions and capabilities
+
+### Implementation Details
+- **Consistent error handling**: All nodes use success, error, not_found, and config_error edges
+- **Google Docs support**: Download node handles export of Google Docs/Sheets/Slides
+- **Flexible upload/download**: Support both file paths and in-memory content
+- **Advanced search**: Full support for Google Drive query syntax
+- **Permission management**: Share files with specific users or make public
+
+### Example Workflows Created
+- **drive-backup.json**: Automated backup workflow that creates dated folders and uploads files
+- **drive-file-organizer.json**: Organizes files by type into appropriate folders
+
+### Node Library Status Update
+- **Total Action Nodes**: 28 (added 8 Google Drive nodes)
+- **Total Control Nodes**: 2
+- **Total Human Nodes**: 3
+- **Total Custom Nodes**: 16 (8 Gmail + 8 Drive nodes)

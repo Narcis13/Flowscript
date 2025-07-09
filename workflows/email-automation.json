@@ -1,0 +1,128 @@
+{
+  "id": "email-automation",
+  "initialState": {
+    "email": "user@example.com",
+    "searchQuery": "from:notifications@github.com",
+    "processedCount": 0
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          {
+            "searchEmails": {
+              "query": "{{searchQuery}}",
+              "getDetails": false,
+              "maxResults": 100
+            }
+          },
+          [
+            "searchEmails",
+            {
+              "success": [
+                {
+                  "setData": {
+                    "path": "$.emailsToProcess",
+                    "value": "{{messages}}"
+                  }
+                },
+                [
+                  {
+                    "forEach": {
+                      "items": "$.emailsToProcess",
+                      "as": "emailStub"
+                    }
+                  },
+                  [
+                    {
+                      "getEmail": {
+                        "messageId": "{{emailStub.id}}"
+                      }
+                    },
+                    [
+                      "getEmail",
+                      {
+                        "success": [
+                          [
+                            {
+                              "checkValue": {
+                                "path": "$.subject",
+                                "contains": "pull request"
+                              }
+                            },
+                            {
+                              "contains": {
+                                "markAsRead": {
+                                  "messageId": "{{id}}"
+                                }
+                              },
+                              "notContains": {
+                                "deleteEmail": {
+                                  "messageId": "{{id}}"
+                                }
+                              }
+                            }
+                          ],
+                          {
+                            "incrementCounter": {
+                              "field": "processedCount"
+                            }
+                          }
+                        ],
+                        "not_found": {
+                          "logError": {
+                            "level": "warning",
+                            "message": "Email not found",
+                            "details": "{{emailStub.id}}"
+                          }
+                        }
+                      }
+                    ]
+                  ]
+                ],
+                {
+                  "sendEmail": {
+                    "to": "{{email}}",
+                    "subject": "Email Processing Complete",
+                    "body": "Processed {{processedCount}} emails matching query: {{searchQuery}}\n\nAutomation completed at: {{new Date().toISOString()}}"
+                  }
+                },
+                {
+                  "generateReport": {
+                    "format": "text",
+                    "data": {
+                      "query": "{{searchQuery}}",
+                      "totalFound": "{{emailsToProcess.length}}",
+                      "processed": "{{processedCount}}",
+                      "completedAt": "{{new Date().toISOString()}}"
+                    }
+                  }
+                }
+              ],
+              "no_results": {
+                "sendEmail": {
+                  "to": "{{email}}",
+                  "subject": "No Emails Found",
+                  "body": "No emails found matching query: {{searchQuery}}"
+                }
+              }
+            }
+          ]
+        ],
+        "error": {
+          "logError": {
+            "level": "error",
+            "message": "Failed to connect to Gmail",
+            "error": "{{error}}"
+          }
+        }
+      }
+    ]
+  ]
+}

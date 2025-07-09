@@ -1,0 +1,22 @@
+{
+  "id": "test-list-emails",
+  "name": "Test List Emails",
+  "initialState": {
+    "message": "Testing listEmails node",
+    "google_token": "ya29.a0AS3H6NyNizDe_iO6atYvN8XJwpFwu5L8",
+    "gmail_profile": {
+      "emailAddress": "smupitesti2001@gmail.com",
+      "messagesTotal": 18012,
+      "threadsTotal": 16966,
+      "historyId": "3119098"
+    }
+  },
+  "nodes": [
+    {
+      "listEmails": {
+        "maxResults": 5,
+        "getFullDetails": true
+      }
+    }
+  ]
+}

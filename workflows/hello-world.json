@@ -15,10 +15,6 @@
     "listEmails": {
       "maxResults": 10
     }
-  },
-    {"setData": {"path": "$.greeting", "value": "Welcome to FlowScript CLI"}},
-    {"logError": {"level": "info", "message": "Running Hello World workflow"}},
-    {"delay": {"seconds": 1}},
-    {"generateReport": {"format": "text", "template": "Greeting: {{greeting}}\nMessage: {{message}}"}}
+  }
   ]
 }

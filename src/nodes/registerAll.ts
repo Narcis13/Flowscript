@@ -31,6 +31,22 @@ import { formInput } from './human/formInput';
 import { reviewData } from './human/reviewData';
 import { googleConnect } from './custom/google/gmail/googleConnect';
 import { listEmails } from './custom/google/gmail/listEmails';
+import { sendEmail } from './custom/google/gmail/sendEmail';
+import { getEmail } from './custom/google/gmail/getEmail';
+import { deleteEmail } from './custom/google/gmail/deleteEmail';
+import { markAsRead } from './custom/google/gmail/markAsRead';
+import { markAsUnread } from './custom/google/gmail/markAsUnread';
+import { searchEmails } from './custom/google/gmail/searchEmails';
+
+// Import Google Drive nodes
+import { listFiles } from './custom/google/gdrive/listFiles';
+import { uploadFile } from './custom/google/gdrive/uploadFile';
+import { downloadFile } from './custom/google/gdrive/downloadFile';
+import { createFolder } from './custom/google/gdrive/createFolder';
+import { deleteFile } from './custom/google/gdrive/deleteFile';
+import { shareFile } from './custom/google/gdrive/shareFile';
+import { searchFiles } from './custom/google/gdrive/searchFiles';
+import { getFileMetadata } from './custom/google/gdrive/getFileMetadata';
 /**
  * Register all nodes with the global registry
  */
@@ -67,8 +83,26 @@ export function registerAllNodes(): void {
   registry.registerInstance(approveExpense);
   registry.registerInstance(formInput);
   registry.registerInstance(reviewData);
+  
+  // Register Google/Gmail nodes
   registry.registerInstance(googleConnect);
   registry.registerInstance(listEmails);
+  registry.registerInstance(sendEmail);
+  registry.registerInstance(getEmail);
+  registry.registerInstance(deleteEmail);
+  registry.registerInstance(markAsRead);
+  registry.registerInstance(markAsUnread);
+  registry.registerInstance(searchEmails);
+  
+  // Register Google Drive nodes
+  registry.registerInstance(listFiles);
+  registry.registerInstance(uploadFile);
+  registry.registerInstance(downloadFile);
+  registry.registerInstance(createFolder);
+  registry.registerInstance(deleteFile);
+  registry.registerInstance(shareFile);
+  registry.registerInstance(searchFiles);
+  registry.registerInstance(getFileMetadata);
 }
 
 /**

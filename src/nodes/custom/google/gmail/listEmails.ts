@@ -19,9 +19,15 @@ export class ListEmailsNode implements Node {
         }
     }
 
-    async execute({ config, state }: ExecutionContext): Promise<SimpleEdgeMap> {
+    async execute(context: ExecutionContext): Promise<SimpleEdgeMap> {
+        console.log('========== ListEmailsNode.execute() START ==========');
+        const { config, state } = context;
+        console.log('Config:', config);
         const accessToken = state.get("google_token");
+        
         const profile = state.get("gmail_profile");
+        console.log('Access token:', accessToken ? 'present' : 'missing');
+        console.log('Profile:', profile);
         console.log(`Listing emails for user: ${profile?.emailAddress || 'unknown'}`);  
         interface EmailHeader {
             name?: string | null | undefined;
@@ -33,8 +39,9 @@ export class ListEmailsNode implements Node {
             return header?.value || '';
         };
         try {
-              if (!accessToken) {
-
+            console.log('Inside try block');
+            if (!accessToken) {
+                console.log('No access token found, returning config_error');
                 return { config_error: () => ({ error: "Configuration Error"}) };
             }
             const oauth2Client = new google.auth.OAuth2();
@@ -108,6 +115,7 @@ export class ListEmailsNode implements Node {
                         return { success: () => resultPayload };
         } catch (error) {
             console.error('Error in listEmails:', error);
+            console.error('Full error object:', JSON.stringify(error, null, 2));
             return {
                 error: () => ({
                     message: 'Cannot list emails from Gmail account',
@@ -118,4 +126,6 @@ export class ListEmailsNode implements Node {
     }
 }
 
+console.log('Creating listEmails node instance...');
 export const listEmails = new ListEmailsNode();
+console.log('listEmails node instance created:', listEmails);

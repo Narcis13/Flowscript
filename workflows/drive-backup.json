@@ -1,0 +1,121 @@
+{
+  "id": "drive-backup",
+  "initialState": {
+    "email": "user@example.com",
+    "backupFolder": "FlowScript-Backups",
+    "sourceDir": "./data",
+    "filesUploaded": 0,
+    "backupFolderId": null
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          {
+            "searchFiles": {
+              "query": "name = '{{backupFolder}}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+            }
+          },
+          [
+            "searchFiles",
+            {
+              "success": {
+                "setData": {
+                  "path": "$.backupFolderId",
+                  "value": "{{files[0].id}}"
+                }
+              },
+              "no_results": [
+                {
+                  "createFolder": {
+                    "folderName": "{{backupFolder}}",
+                    "description": "Automated backups from FlowScript"
+                  }
+                },
+                [
+                  "createFolder",
+                  {
+                    "success": {
+                      "setData": {
+                        "path": "$.backupFolderId",
+                        "value": "{{id}}"
+                      }
+                    }
+                  }
+                ]
+              ]
+            }
+          ],
+          {
+            "createFolder": {
+              "folderName": "Backup-{{new Date().toISOString().split('T')[0]}}",
+              "parentFolderId": "{{backupFolderId}}",
+              "description": "Daily backup"
+            }
+          },
+          [
+            "createFolder",
+            {
+              "success": [
+                {
+                  "setData": {
+                    "path": "$.currentBackupFolderId",
+                    "value": "{{id}}"
+                  }
+                },
+                {
+                  "uploadFile": {
+                    "filePath": "{{sourceDir}}/config.json",
+                    "folderId": "{{currentBackupFolderId}}"
+                  }
+                },
+                {
+                  "uploadFile": {
+                    "content": "Backup completed at {{new Date().toISOString()}}\\nFiles uploaded: {{filesUploaded}}",
+                    "fileName": "backup-log.txt",
+                    "folderId": "{{currentBackupFolderId}}",
+                    "mimeType": "text/plain"
+                  }
+                },
+                {
+                  "shareFile": {
+                    "fileId": "{{currentBackupFolderId}}",
+                    "emailAddress": "{{email}}",
+                    "role": "reader",
+                    "sendNotificationEmail": true,
+                    "emailMessage": "Your backup is complete and ready for review.",
+                    "getSharingLink": true
+                  }
+                },
+                {
+                  "generateReport": {
+                    "format": "json",
+                    "data": {
+                      "backupDate": "{{new Date().toISOString()}}",
+                      "backupFolderId": "{{currentBackupFolderId}}",
+                      "filesUploaded": "{{filesUploaded}}",
+                      "sharingLink": "{{sharingLink.webViewLink}}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        ],
+        "error": {
+          "logError": {
+            "level": "error",
+            "message": "Failed to connect to Google Drive",
+            "error": "{{error}}"
+          }
+        }
+      }
+    ]
+  ]
+}

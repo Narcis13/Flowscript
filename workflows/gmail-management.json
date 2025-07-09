@@ -1,0 +1,124 @@
+{
+  "id": "gmail-management",
+  "initialState": {
+    "email": "user@example.com",
+    "unreadCount": 0,
+    "importantEmails": []
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          {
+            "searchEmails": {
+              "query": "is:unread",
+              "getDetails": true,
+              "maxResults": 20
+            }
+          },
+          [
+            "searchEmails", 
+            {
+              "success": [
+                {
+                  "setData": {
+                    "path": "$.unreadEmails",
+                    "value": "{{messages}}"
+                  }
+                },
+                {
+                  "setData": {
+                    "path": "$.unreadCount", 
+                    "value": "{{totalResults}}"
+                  }
+                },
+                [
+                  {
+                    "forEach": {
+                      "items": "$.unreadEmails",
+                      "as": "email"
+                    }
+                  },
+                  [
+                    [
+                      {
+                        "checkValue": {
+                          "path": "$.email.subject",
+                          "contains": "URGENT"
+                        }
+                      },
+                      {
+                        "contains": [
+                          {
+                            "setData": {
+                              "path": "$.importantEmails",
+                              "value": "{{importantEmails.concat([email])}}"
+                            }
+                          },
+                          {
+                            "markAsRead": {
+                              "messageId": "{{email.id}}"
+                            }
+                          },
+                          {
+                            "sendEmail": {
+                              "to": "manager@example.com",
+                              "subject": "Urgent Email Alert: {{email.subject}}",
+                              "body": "An urgent email was received from {{email.from}} with subject: {{email.subject}}\n\nSnippet: {{email.snippet}}"
+                            }
+                          }
+                        ],
+                        "notContains": {
+                          "markAsRead": {
+                            "messageId": "{{email.id}}"
+                          }
+                        }
+                      }
+                    ]
+                  ]
+                ],
+                {
+                  "generateReport": {
+                    "format": "json",
+                    "data": {
+                      "totalUnread": "{{unreadCount}}",
+                      "urgentEmails": "{{importantEmails.length}}",
+                      "processedEmails": "{{unreadEmails.length}}",
+                      "timestamp": "{{new Date().toISOString()}}"
+                    }
+                  }
+                }
+              ],
+              "no_results": {
+                "setData": {
+                  "path": "$.message",
+                  "value": "No unread emails found"
+                }
+              },
+              "error": {
+                "logError": {
+                  "level": "error",
+                  "message": "Failed to search emails",
+                  "error": "{{error}}"
+                }
+              }
+            }
+          ]
+        ],
+        "error": {
+          "logError": {
+            "level": "error", 
+            "message": "Failed to connect to Google account",
+            "error": "{{error}}"
+          }
+        }
+      }
+    ]
+  ]
+}

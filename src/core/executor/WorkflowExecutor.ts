@@ -317,6 +317,12 @@ export class WorkflowExecutor {
       // Execute the node
       const edgeMap = await node.execute(context);
       
+      // Log state after node execution
+      console.log(`State after ${node.metadata.name}:`, {
+        google_token: state.get('google_token') ? 'present' : 'missing',
+        gmail_profile: state.get('gmail_profile') ? 'present' : 'missing'
+      });
+      
       // Find the first edge (nodes typically return one edge)
       const edgeNames = Object.keys(edgeMap);
       const selectedEdge = edgeNames[0];

@@ -1,0 +1,168 @@
+{
+  "id": "drive-file-organizer",
+  "initialState": {
+    "email": "user@example.com",
+    "processedFiles": 0,
+    "movedFiles": 0,
+    "folders": {
+      "documents": null,
+      "images": null,
+      "spreadsheets": null,
+      "presentations": null
+    }
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          [
+            {
+              "forEach": {
+                "items": ["Documents", "Images", "Spreadsheets", "Presentations"],
+                "as": "folderName"
+              }
+            },
+            [
+              {
+                "searchFiles": {
+                  "query": "name = '{{folderName}}' and mimeType = 'application/vnd.google-apps.folder'"
+                }
+              },
+              [
+                "searchFiles",
+                {
+                  "no_results": {
+                    "createFolder": {
+                      "folderName": "{{folderName}}"
+                    }
+                  }
+                }
+              ]
+            ]
+          ],
+          {
+            "listFiles": {
+              "query": "'root' in parents",
+              "pageSize": 50
+            }
+          },
+          [
+            "listFiles",
+            {
+              "success": [
+                [
+                  {
+                    "forEach": {
+                      "items": "$.files",
+                      "as": "file"
+                    }
+                  },
+                  [
+                    {
+                      "setData": {
+                        "path": "$.currentFile",
+                        "value": "{{file}}"
+                      }
+                    },
+                    [
+                      {
+                        "checkValue": {
+                          "path": "$.currentFile.mimeType",
+                          "startsWith": "image/"
+                        }
+                      },
+                      {
+                        "startsWith": [
+                          {
+                            "searchFiles": {
+                              "query": "name = 'Images' and mimeType = 'application/vnd.google-apps.folder'"
+                            }
+                          },
+                          {
+                            "getFileMetadata": {
+                              "fileId": "{{currentFile.id}}"
+                            }
+                          },
+                          [
+                            "getFileMetadata",
+                            {
+                              "success": [
+                                {
+                                  "deleteFile": {
+                                    "fileId": "{{currentFile.id}}"
+                                  }
+                                },
+                                {
+                                  "uploadFile": {
+                                    "fileName": "{{name}}",
+                                    "content": "placeholder",
+                                    "folderId": "{{files[0].id}}",
+                                    "mimeType": "{{mimeType}}"
+                                  }
+                                },
+                                {
+                                  "incrementCounter": {
+                                    "field": "movedFiles"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        ]
+                      }
+                    ],
+                    [
+                      {
+                        "checkValue": {
+                          "path": "$.currentFile.mimeType",
+                          "equals": "application/vnd.google-apps.document"
+                        }
+                      },
+                      {
+                        "equals": [
+                          {
+                            "searchFiles": {
+                              "query": "name = 'Documents' and mimeType = 'application/vnd.google-apps.folder'"
+                            }
+                          },
+                          {
+                            "shareFile": {
+                              "fileId": "{{currentFile.id}}",
+                              "type": "anyone",
+                              "role": "reader"
+                            }
+                          }
+                        ]
+                      }
+                    ],
+                    {
+                      "incrementCounter": {
+                        "field": "processedFiles"
+                      }
+                    }
+                  ]
+                ],
+                {
+                  "generateReport": {
+                    "format": "text",
+                    "data": {
+                      "totalProcessed": "{{processedFiles}}",
+                      "filesMoved": "{{movedFiles}}",
+                      "completedAt": "{{new Date().toISOString()}}"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    ]
+  ]
+}
