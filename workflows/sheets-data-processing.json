@@ -1,0 +1,150 @@
+{
+  "id": "sheets-data-processing",
+  "initialState": {
+    "email": "user@example.com",
+    "spreadsheetTitle": "Sales Report {{new Date().getFullYear()}}",
+    "salesData": [
+      ["Date", "Product", "Quantity", "Price", "Total"],
+      ["2025-01-01", "Widget A", 10, 25.99, 259.90],
+      ["2025-01-02", "Widget B", 5, 45.50, 227.50],
+      ["2025-01-03", "Widget A", 8, 25.99, 207.92]
+    ],
+    "summaryData": [],
+    "spreadsheetId": null
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          {
+            "createSpreadsheet": {
+              "title": "{{spreadsheetTitle}}",
+              "sheets": ["Sales Data", "Summary", "Charts"],
+              "initialData": "{{salesData}}"
+            }
+          },
+          [
+            "createSpreadsheet",
+            {
+              "success": [
+                {
+                  "setData": {
+                    "path": "$.spreadsheetId",
+                    "value": "{{spreadsheetId}}"
+                  }
+                },
+                {
+                  "addSheet": {
+                    "spreadsheetId": "{{spreadsheetId}}",
+                    "title": "Monthly Totals",
+                    "gridProperties": {
+                      "rowCount": 100,
+                      "columnCount": 10,
+                      "frozenRowCount": 1
+                    },
+                    "tabColor": {
+                      "red": 0.5,
+                      "green": 0.8,
+                      "blue": 0.5
+                    }
+                  }
+                },
+                {
+                  "readRange": {
+                    "spreadsheetId": "{{spreadsheetId}}",
+                    "range": "Sales Data!A2:E",
+                    "firstRowAsHeaders": false
+                  }
+                },
+                [
+                  "readRange",
+                  {
+                    "success": [
+                      {
+                        "setData": {
+                          "path": "$.salesRows",
+                          "value": "{{values}}"
+                        }
+                      },
+                      {
+                        "setData": {
+                          "path": "$.totalSales",
+                          "value": "{{values.reduce((sum, row) => sum + (row[4] || 0), 0)}}"
+                        }
+                      },
+                      {
+                        "writeRange": {
+                          "spreadsheetId": "{{spreadsheetId}}",
+                          "range": "Summary!A1:B5",
+                          "values": [
+                            ["Metric", "Value"],
+                            ["Total Sales", "{{totalSales}}"],
+                            ["Number of Transactions", "{{salesRows.length}}"],
+                            ["Average Sale", "{{totalSales / salesRows.length}}"],
+                            ["Report Generated", "{{new Date().toISOString()}}"]
+                          ]
+                        }
+                      },
+                      {
+                        "updateCell": {
+                          "spreadsheetId": "{{spreadsheetId}}",
+                          "cell": "Summary!A7",
+                          "value": "=SPARKLINE(Sales Data!E2:E)"
+                        }
+                      },
+                      {
+                        "appendRows": {
+                          "spreadsheetId": "{{spreadsheetId}}",
+                          "sheetName": "Sales Data",
+                          "values": [
+                            ["2025-01-04", "Widget C", 12, 15.00, 180.00],
+                            ["2025-01-05", "Widget A", 20, 25.99, 519.80]
+                          ]
+                        }
+                      },
+                      {
+                        "shareFile": {
+                          "fileId": "{{spreadsheetId}}",
+                          "emailAddress": "{{email}}",
+                          "role": "writer",
+                          "sendNotificationEmail": true,
+                          "emailMessage": "Your sales report is ready for review",
+                          "getSharingLink": true
+                        }
+                      },
+                      {
+                        "generateReport": {
+                          "format": "json",
+                          "data": {
+                            "spreadsheetId": "{{spreadsheetId}}",
+                            "spreadsheetUrl": "{{spreadsheetUrl}}",
+                            "totalSales": "{{totalSales}}",
+                            "recordsProcessed": "{{salesRows.length}}",
+                            "sharingLink": "{{sharingLink.webViewLink}}"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              ]
+            }
+          ]
+        ],
+        "error": {
+          "logError": {
+            "level": "error",
+            "message": "Failed to connect to Google",
+            "error": "{{error}}"
+          }
+        }
+      }
+    ]
+  ]
+}

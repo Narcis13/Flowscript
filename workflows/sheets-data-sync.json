@@ -1,0 +1,164 @@
+{
+  "id": "sheets-data-sync",
+  "initialState": {
+    "email": "user@example.com",
+    "sourceSpreadsheetId": "SOURCE_SHEET_ID",
+    "targetSpreadsheetId": null,
+    "dataTransferred": 0,
+    "errors": []
+  },
+  "nodes": [
+    {
+      "googleConnect": {
+        "email": "{{email}}"
+      }
+    },
+    [
+      "googleConnect",
+      {
+        "success": [
+          {
+            "getSheetMetadata": {
+              "spreadsheetId": "{{sourceSpreadsheetId}}",
+              "includeSheets": true,
+              "calculateTotalCells": true
+            }
+          },
+          [
+            "getSheetMetadata",
+            {
+              "success": [
+                {
+                  "setData": {
+                    "path": "$.sourceMetadata",
+                    "value": "{{$}}"
+                  }
+                },
+                {
+                  "createSpreadsheet": {
+                    "title": "{{properties.title}} - Copy {{new Date().toISOString().split('T')[0]}}",
+                    "sheets": "{{sheets.map(s => s.title)}}"
+                  }
+                },
+                [
+                  "createSpreadsheet",
+                  {
+                    "success": [
+                      {
+                        "setData": {
+                          "path": "$.targetSpreadsheetId",
+                          "value": "{{spreadsheetId}}"
+                        }
+                      },
+                      [
+                        {
+                          "forEach": {
+                            "items": "$.sourceMetadata.sheets",
+                            "as": "sheet"
+                          }
+                        },
+                        [
+                          [
+                            {
+                              "checkValue": {
+                                "path": "$.sheet.hidden",
+                                "equals": true
+                              }
+                            },
+                            {
+                              "notEquals": [
+                                {
+                                  "readRange": {
+                                    "spreadsheetId": "{{sourceSpreadsheetId}}",
+                                    "range": "{{sheet.title}}!A1:ZZ",
+                                    "majorDimension": "ROWS"
+                                  }
+                                },
+                                [
+                                  "readRange",
+                                  {
+                                    "success": [
+                                      {
+                                        "writeRange": {
+                                          "spreadsheetId": "{{targetSpreadsheetId}}",
+                                          "range": "{{sheet.title}}!A1",
+                                          "values": "{{values}}",
+                                          "valueInputOption": "RAW"
+                                        }
+                                      },
+                                      {
+                                        "incrementCounter": {
+                                          "field": "dataTransferred",
+                                          "increment": "{{values.length}}"
+                                        }
+                                      }
+                                    ],
+                                    "no_data": {
+                                      "logError": {
+                                        "level": "info",
+                                        "message": "Sheet {{sheet.title}} is empty"
+                                      }
+                                    },
+                                    "error": [
+                                      {
+                                        "setData": {
+                                          "path": "$.errors",
+                                          "value": "{{errors.concat([{sheet: sheet.title, error: error}])}}"
+                                        }
+                                      }
+                                    ]
+                                  }
+                                ]
+                              ]
+                            }
+                          ]
+                        ]
+                      ],
+                      {
+                        "clearRange": {
+                          "spreadsheetId": "{{targetSpreadsheetId}}",
+                          "range": "Sheet1!A1:ZZ"
+                        }
+                      },
+                      {
+                        "deleteSheet": {
+                          "spreadsheetId": "{{targetSpreadsheetId}}",
+                          "sheetTitle": "Sheet1"
+                        }
+                      },
+                      {
+                        "getSheetMetadata": {
+                          "spreadsheetId": "{{targetSpreadsheetId}}"
+                        }
+                      },
+                      {
+                        "generateReport": {
+                          "format": "text",
+                          "data": {
+                            "sourceTitle": "{{sourceMetadata.properties.title}}",
+                            "targetId": "{{targetSpreadsheetId}}",
+                            "sheetsSync": "{{sourceMetadata.sheetCount}}",
+                            "rowsTransferred": "{{dataTransferred}}",
+                            "errors": "{{errors.length}}",
+                            "completedAt": "{{new Date().toISOString()}}"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              ],
+              "not_found": {
+                "logError": {
+                  "level": "error",
+                  "message": "Source spreadsheet not found",
+                  "spreadsheetId": "{{sourceSpreadsheetId}}"
+                }
+              }
+            }
+          ]
+        ]
+      }
+    ]
+  ]
+}

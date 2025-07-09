@@ -47,6 +47,17 @@ import { deleteFile } from './custom/google/gdrive/deleteFile';
 import { shareFile } from './custom/google/gdrive/shareFile';
 import { searchFiles } from './custom/google/gdrive/searchFiles';
 import { getFileMetadata } from './custom/google/gdrive/getFileMetadata';
+
+// Import Google Sheets nodes
+import { createSpreadsheet } from './custom/google/sheets/createSpreadsheet';
+import { readRange } from './custom/google/sheets/readRange';
+import { writeRange } from './custom/google/sheets/writeRange';
+import { appendRows } from './custom/google/sheets/appendRows';
+import { updateCell } from './custom/google/sheets/updateCell';
+import { clearRange } from './custom/google/sheets/clearRange';
+import { addSheet } from './custom/google/sheets/addSheet';
+import { deleteSheet } from './custom/google/sheets/deleteSheet';
+import { getSheetMetadata } from './custom/google/sheets/getSheetMetadata';
 /**
  * Register all nodes with the global registry
  */
@@ -103,6 +114,17 @@ export function registerAllNodes(): void {
   registry.registerInstance(shareFile);
   registry.registerInstance(searchFiles);
   registry.registerInstance(getFileMetadata);
+  
+  // Register Google Sheets nodes
+  registry.registerInstance(createSpreadsheet);
+  registry.registerInstance(readRange);
+  registry.registerInstance(writeRange);
+  registry.registerInstance(appendRows);
+  registry.registerInstance(updateCell);
+  registry.registerInstance(clearRange);
+  registry.registerInstance(addSheet);
+  registry.registerInstance(deleteSheet);
+  registry.registerInstance(getSheetMetadata);
 }
 
 /**
