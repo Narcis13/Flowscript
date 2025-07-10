@@ -278,3 +278,70 @@
 - **Total Control Nodes**: 2
 - **Total Human Nodes**: 3
 - **Total Custom Nodes**: 16 (8 Gmail + 8 Drive nodes)
+
+## Recent Updates (X Platform Nodes Implementation - July 10, 2025)
+### New X (Twitter) API v2 Integration Nodes
+- **Authentication Nodes**: xAuth, xRefreshToken
+- **Post Management**: xCreatePost, xDeletePost, xGetPost, xSearchPosts, xQuotePost, xSchedulePost
+- **User Management**: xGetUser, xGetUserPosts, xGetUserMentions, xFollowUser, xUnfollowUser, xBlockUser, xUnblockUser
+- **Engagement**: xGetLikes, xGetRetweets, xGetQuotes, xGetEngagementStats
+- **Media**: xUploadMedia, xGetMedia
+- **Lists**: xGetLists, xCreateList, xAddToList, xRemoveFromList
+- **Direct Messages**: xSendDM, xGetDMs
+- **Spaces**: xGetSpace, xGetScheduledSpaces
+- **Analytics**: xGetAnalytics
+- **Utilities**: xRateLimitStatus, xGetTrends
+- **Content Analysis**: xAnalyzeSentiment, xDetectToxicity
+- **Error Handling**: xErrorHandler
+
+### Implementation Details
+- **Complete OAuth 2.0 implementation**: Support for PKCE flow and token refresh
+- **Media handling**: Upload images and videos with progress tracking
+- **Advanced search**: Full Twitter search operators support
+- **Rate limiting**: Built-in rate limit awareness and status checking
+- **Error recovery**: Comprehensive error handling with retry logic
+- **Content moderation**: Sentiment analysis and toxicity detection
+
+### Node Library Status Update
+- **Total Action Nodes**: 58 (added 30 X platform nodes)
+- **Total Control Nodes**: 2
+- **Total Human Nodes**: 3
+- **Total Custom Nodes**: 46 (8 Gmail + 8 Drive + 30 X nodes)
+
+## Recent Updates (AI Nodes Implementation with Vercel AI SDK - July 10, 2025)
+### New AI-Powered Nodes
+- **Core Text Generation**: generateText, streamText
+- **Structured Data**: generateObject, streamObject
+- **Embeddings**: generateEmbedding, embedMultiple
+- **Tool Integration**: aiToolCall
+- **Conversation**: continueConversation
+- **Control Flow**: aiConditional, aiLoop
+- **Multi-Modal**: analyzeImage (vision-capable models)
+- **Specialized Tasks**: aiDataExtractor, aiSummarizer, aiTranslator, aiCodeGenerator
+- **Human-AI Collaboration**: aiAssistedReview (combines AI analysis with human judgment)
+- **Utilities**: aiModelSelector (dynamic model selection), aiErrorHandler (AI-powered error recovery)
+
+### Implementation Details
+- **Multi-Provider Support**: OpenAI (GPT-4, GPT-3.5) and Anthropic (Claude 3 family) models
+- **Streaming Support**: Real-time text and object generation for responsive UIs
+- **Tool Calling**: Support for function calling with Zod schema validation
+- **Vision Capabilities**: Image analysis with GPT-4o and Claude 3 models
+- **Embeddings**: Support for OpenAI's text-embedding models
+- **Dynamic Model Selection**: Automatic model selection based on task requirements
+- **Error Recovery**: AI-powered error analysis and recovery strategies
+
+### Example Workflows Created
+- **ai-content-moderation-workflow.json**: Intelligent content moderation combining image/text analysis with human review
+- **ai-multilingual-support-workflow.json**: Automated customer support in multiple languages via X platform
+
+### Dependencies Added
+- **ai**: Vercel AI SDK core
+- **@ai-sdk/openai**: OpenAI provider
+- **@ai-sdk/anthropic**: Anthropic provider
+- **zod**: Schema validation
+
+### Node Library Status Update
+- **Total Action Nodes**: 76 (added 18 AI nodes)
+- **Total Control Nodes**: 2
+- **Total Human Nodes**: 3
+- **Total Custom Nodes**: 64 (8 Gmail + 8 Drive + 30 X + 18 AI nodes)

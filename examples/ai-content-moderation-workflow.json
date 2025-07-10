@@ -1,0 +1,179 @@
+{
+  "id": "ai-content-moderation-workflow",
+  "name": "AI-Powered Content Moderation Pipeline",
+  "description": "Intelligent workflow that analyzes user-generated content (text and images) for policy violations using AI, with human review for edge cases",
+  "initialState": {
+    "contentId": null,
+    "contentType": null,
+    "contentUrl": null,
+    "contentText": null,
+    "moderationHistory": [],
+    "finalDecision": null
+  },
+  "flow": [
+    {
+      "node": "xGetPost",
+      "config": {
+        "postId": "${state.contentId}",
+        "includeMedia": true
+      }
+    },
+    [
+      {
+        "node": "condition",
+        "config": {
+          "check": "${data.media && data.media.length > 0}"
+        }
+      },
+      {
+        "hasMedia": [
+          {
+            "node": "analyzeImage",
+            "config": {
+              "model": "gpt-4o",
+              "imageUrl": "${data.media[0].url}",
+              "prompt": "Analyze this image for: 1) Explicit content 2) Violence 3) Hate symbols 4) Misinformation 5) Personal information. Provide a safety assessment.",
+              "temperature": 0.1
+            }
+          }
+        ],
+        "noMedia": []
+      }
+    ],
+    {
+      "node": "aiDataExtractor",
+      "config": {
+        "model": "gpt-4o-mini",
+        "dataSource": "${state.contentText || data.text}",
+        "extractionSchema": {
+          "hasHateSpeech": "boolean",
+          "hasThreats": "boolean",
+          "hasSpam": "boolean",
+          "hasMisinformation": "boolean",
+          "toxicityScore": "number",
+          "categories": "array",
+          "explanation": "string"
+        },
+        "instructions": "Analyze the text content for policy violations. Be thorough but fair.",
+        "temperature": 0.2
+      }
+    },
+    {
+      "node": "aiModelSelector",
+      "config": {
+        "taskDescription": "Make final moderation decision based on content analysis",
+        "constraints": {
+          "costLimit": "medium",
+          "speedRequirement": "fast",
+          "capabilitiesNeeded": ["reasoning"]
+        }
+      }
+    },
+    {
+      "node": "generateObject",
+      "config": {
+        "model": "${data.model}",
+        "schema": {
+          "decision": "string",
+          "confidence": "number",
+          "violationTypes": "array",
+          "severity": "string",
+          "requiresHumanReview": "boolean",
+          "suggestedActions": "array"
+        },
+        "prompt": "Based on the content analysis: Image analysis: ${state.lastImageAnalysis?.description || 'No images'}\nText analysis: ${state.lastExtractedData}\n\nMake a moderation decision.",
+        "temperature": 0.1
+      }
+    },
+    [
+      {
+        "node": "aiConditional",
+        "config": {
+          "model": "gpt-4o-mini",
+          "condition": "${data.requiresHumanReview}",
+          "contextData": {
+            "decision": "${data.decision}",
+            "confidence": "${data.confidence}",
+            "analysis": "${state.lastExtractedData}"
+          }
+        }
+      },
+      {
+        "requiresReview": [
+          {
+            "node": "aiAssistedReview",
+            "config": {
+              "model": "gpt-4o",
+              "content": "Content ID: ${state.contentId}\nAI Decision: ${data.decision}\nConfidence: ${data.confidence}\nViolations: ${data.violationTypes}",
+              "reviewCriteria": "Review the AI's moderation decision. Consider context, intent, and potential false positives.",
+              "temperature": 0.3
+            }
+          }
+        ],
+        "autoDecision": [
+          {
+            "node": "setValue",
+            "config": {
+              "path": "finalDecision",
+              "value": "${data.decision}"
+            }
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "node": "condition",
+        "config": {
+          "check": "${state.finalDecision === 'remove' || state.finalDecision === 'restrict'}"
+        }
+      },
+      {
+        "takeAction": [
+          {
+            "node": "xDeletePost",
+            "config": {
+              "postId": "${state.contentId}"
+            }
+          },
+          {
+            "node": "generateText",
+            "config": {
+              "model": "gpt-4o-mini",
+              "prompt": "Generate a polite notification to the user explaining why their content was removed. Violations: ${data.violationTypes}",
+              "maxTokens": 200
+            }
+          },
+          {
+            "node": "xSendDM",
+            "config": {
+              "recipientId": "${state.userId}",
+              "message": "${data.text}"
+            }
+          }
+        ],
+        "approved": [
+          {
+            "node": "setValue",
+            "config": {
+              "path": "moderationHistory",
+              "value": {
+                "timestamp": "${new Date().toISOString()}",
+                "decision": "approved",
+                "reviewer": "ai_system"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    {
+      "node": "aiErrorHandler",
+      "config": {
+        "model": "gpt-4o-mini",
+        "includeRecovery": true,
+        "notifyAdmin": true
+      }
+    }
+  ]
+}

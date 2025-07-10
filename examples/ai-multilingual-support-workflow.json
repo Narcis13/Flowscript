@@ -1,0 +1,234 @@
+{
+  "id": "ai-multilingual-support-workflow",
+  "name": "AI-Powered Multilingual Customer Support",
+  "description": "Intelligent workflow that handles customer inquiries in multiple languages via X (Twitter), providing automated responses with human escalation for complex issues",
+  "initialState": {
+    "mentionId": null,
+    "userId": null,
+    "userMessage": null,
+    "detectedLanguage": null,
+    "conversationHistory": [],
+    "resolved": false
+  },
+  "flow": [
+    {
+      "node": "xGetUserMentions",
+      "config": {
+        "userId": "${env.SUPPORT_ACCOUNT_ID}",
+        "since": "${state.lastCheckTime || new Date(Date.now() - 300000).toISOString()}",
+        "limit": 10
+      }
+    },
+    {
+      "node": "forEach",
+      "config": {
+        "items": "${data.mentions}",
+        "itemName": "mention"
+      },
+      "subflow": [
+        {
+          "node": "setValue",
+          "config": {
+            "path": "currentMention",
+            "value": "${mention}"
+          }
+        },
+        {
+          "node": "aiTranslator",
+          "config": {
+            "model": "gpt-4o-mini",
+            "text": "${mention.text}",
+            "targetLang": "en",
+            "tone": "technical",
+            "temperature": 0.2
+          }
+        },
+        {
+          "node": "aiDataExtractor",
+          "config": {
+            "model": "gpt-4o",
+            "dataSource": "${data.translation}",
+            "extractionSchema": {
+              "issueType": "string",
+              "urgency": "string",
+              "sentiment": "string",
+              "productMentioned": "string",
+              "requiresHuman": "boolean",
+              "suggestedDepartment": "string"
+            },
+            "instructions": "Analyze this customer support message and extract key information. Common issues: billing, technical problems, feature requests, complaints.",
+            "temperature": 0.3
+          }
+        },
+        {
+          "node": "embedMultiple",
+          "config": {
+            "model": "text-embedding-3-small",
+            "texts": [
+              "${data.translation}",
+              "${state.lastExtractedData.issueType}"
+            ]
+          }
+        },
+        {
+          "node": "setValue",
+          "config": {
+            "path": "queryEmbedding",
+            "value": "${data.embeddings[0]}"
+          }
+        },
+        [
+          {
+            "node": "aiConditional",
+            "config": {
+              "model": "gpt-4o-mini",
+              "condition": "${state.lastExtractedData.requiresHuman || state.lastExtractedData.urgency === 'critical'}",
+              "contextData": "${state.lastExtractedData}"
+            }
+          },
+          {
+            "needsHuman": [
+              {
+                "node": "humanTask",
+                "config": {
+                  "title": "Customer Support Escalation",
+                  "description": "High-priority customer inquiry requires human attention",
+                  "formSchema": {
+                    "response": {
+                      "type": "string",
+                      "title": "Response to customer"
+                    },
+                    "internalNotes": {
+                      "type": "string",
+                      "title": "Internal notes"
+                    }
+                  },
+                  "contextData": {
+                    "originalMessage": "${state.currentMention.text}",
+                    "translation": "${data.translation}",
+                    "analysis": "${state.lastExtractedData}",
+                    "userProfile": "@${state.currentMention.username}"
+                  }
+                }
+              }
+            ],
+            "canAutomate": [
+              {
+                "node": "continueConversation",
+                "config": {
+                  "model": "gpt-4o",
+                  "messages": [
+                    {
+                      "role": "system",
+                      "content": "You are a helpful customer support agent. Be professional, empathetic, and solution-oriented. Keep responses under 280 characters for X platform."
+                    },
+                    {
+                      "role": "user",
+                      "content": "Customer issue: ${data.translation}\nIssue type: ${state.lastExtractedData.issueType}\nProduct: ${state.lastExtractedData.productMentioned}"
+                    }
+                  ],
+                  "temperature": 0.7,
+                  "maxTokens": 100
+                }
+              }
+            ]
+          }
+        ],
+        {
+          "node": "aiTranslator",
+          "config": {
+            "model": "gpt-4o-mini",
+            "text": "${data.response || data.text}",
+            "sourceLang": "en",
+            "targetLang": "${state.lastTranslation.sourceLang}",
+            "tone": "formal",
+            "temperature": 0.2
+          }
+        },
+        {
+          "node": "generateText",
+          "config": {
+            "model": "gpt-4o-mini",
+            "prompt": "Ensure this response fits X's character limit (280 chars) while maintaining the message: ${data.translation}\n\nIf too long, summarize professionally.",
+            "maxTokens": 100,
+            "temperature": 0.3
+          }
+        },
+        {
+          "node": "xCreatePost",
+          "config": {
+            "text": "${data.text}",
+            "replyToId": "${state.currentMention.id}"
+          }
+        },
+        {
+          "node": "aiSummarizer",
+          "config": {
+            "model": "gpt-4o-mini",
+            "text": "Mention: ${state.currentMention.text}\nResponse: ${data.text}\nIssue: ${state.lastExtractedData.issueType}\nResolution: ${state.lastExtractedData.requiresHuman ? 'Escalated to human' : 'Automated response'}",
+            "format": "bullets",
+            "maxLength": 200
+          }
+        },
+        {
+          "node": "setValue",
+          "config": {
+            "path": "conversationHistory",
+            "value": {
+              "mentionId": "${state.currentMention.id}",
+              "timestamp": "${new Date().toISOString()}",
+              "summary": "${data.summary}",
+              "language": "${state.lastTranslation.sourceLang}",
+              "automated": "${!state.lastExtractedData.requiresHuman}"
+            },
+            "append": true
+          }
+        }
+      ]
+    },
+    {
+      "node": "aiLoop",
+      "config": {
+        "model": "gpt-4o-mini",
+        "maxIterations": 24,
+        "loopData": {
+          "checkInterval": 300000,
+          "supportActive": true
+        },
+        "continueCondition": "Continue monitoring for new mentions"
+      }
+    },
+    {
+      "node": "generateObject",
+      "config": {
+        "model": "gpt-4o",
+        "schema": {
+          "totalInteractions": "number",
+          "languagesHandled": "array",
+          "automationRate": "number",
+          "commonIssues": "array",
+          "recommendations": "array"
+        },
+        "prompt": "Analyze the support session history and provide insights: ${JSON.stringify(state.conversationHistory)}",
+        "temperature": 0.5
+      }
+    },
+    {
+      "node": "aiCodeGenerator",
+      "config": {
+        "model": "gpt-4o",
+        "language": "markdown",
+        "specification": "Generate a daily support report with statistics from the analysis: ${JSON.stringify(data)}",
+        "style": "verbose",
+        "includeComments": false
+      }
+    },
+    {
+      "node": "setValue",
+      "config": {
+        "path": "dailyReport",
+        "value": "${data.code}"
+      }
+    }
+  ]
+}
