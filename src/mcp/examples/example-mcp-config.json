@@ -1,0 +1,112 @@
+{
+  "name": "flowscript-mcp",
+  "version": "1.0.0",
+  "description": "FlowScript workflow engine exposed via Model Context Protocol",
+  "author": "FlowScript Team",
+  "license": "MIT",
+  
+  "server": {
+    "command": "node",
+    "args": ["dist/mcp/server/mcp-stdio-server.js"],
+    "env": {
+      "NODE_ENV": "production",
+      "FLOWSCRIPT_CONFIG": "./flowscript.config.json"
+    }
+  },
+  
+  "transport": {
+    "type": "stdio",
+    "encoding": "utf-8"
+  },
+  
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false,
+    "logging": true
+  },
+  
+  "tools": {
+    "description": "FlowScript nodes are auto-discovered and exposed as MCP tools",
+    "categories": [
+      {
+        "name": "Node Execution",
+        "description": "Execute individual FlowScript nodes",
+        "examples": [
+          "flowscript_httpRequest",
+          "flowscript_validateData",
+          "flowscript_setData"
+        ]
+      },
+      {
+        "name": "Workflow Management",
+        "description": "Tools for workflow composition and management",
+        "tools": [
+          {
+            "name": "flowscript_findNodes",
+            "description": "Discover nodes based on task descriptions"
+          },
+          {
+            "name": "flowscript_composeWorkflow",
+            "description": "Create workflows from natural language"
+          },
+          {
+            "name": "flowscript_validateWorkflow",
+            "description": "Validate workflow definitions"
+          }
+        ]
+      }
+    ]
+  },
+  
+  "configuration": {
+    "verbose": false,
+    "includeWorkflowTools": true,
+    "stateManagement": {
+      "persistence": false,
+      "maxExecutions": 100
+    },
+    "nodeRegistry": {
+      "autoDiscover": true,
+      "directories": [
+        "./src/nodes/actions",
+        "./src/nodes/controls",
+        "./src/nodes/human",
+        "./src/nodes/custom"
+      ]
+    }
+  },
+  
+  "examples": {
+    "findHttpNode": {
+      "tool": "flowscript_findNodes",
+      "params": {
+        "task": "make HTTP requests",
+        "type": "action"
+      }
+    },
+    "composeDataPipeline": {
+      "tool": "flowscript_composeWorkflow",
+      "params": {
+        "description": "Fetch data from an API, validate it, and save to database",
+        "includeHumanSteps": false
+      }
+    },
+    "executeHttpRequest": {
+      "tool": "flowscript_httpRequest",
+      "params": {
+        "url": "https://api.example.com/data",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer token"
+        }
+      }
+    }
+  },
+  
+  "metadata": {
+    "documentation": "https://github.com/yourusername/flowscript/docs/mcp.md",
+    "repository": "https://github.com/yourusername/flowscript",
+    "issues": "https://github.com/yourusername/flowscript/issues"
+  }
+}

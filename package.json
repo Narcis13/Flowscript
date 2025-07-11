@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "flowscript": "./dist/cli/index.js"
+    "flowscript": "./dist/cli/index.js",
+    "flowscript-mcp": "./dist/mcp/server/mcp-stdio-server.js"
   },
   "scripts": {
     "build": "tsc",
@@ -17,7 +18,11 @@
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "mcp:build": "tsc && chmod +x dist/mcp/server/mcp-stdio-server.js",
+    "mcp:start": "node dist/mcp/server/mcp-stdio-server.js",
+    "mcp:dev": "tsx src/mcp/server/mcp-stdio-server.ts",
+    "mcp:test": "echo '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2024-11-15\",\"capabilities\":{},\"clientInfo\":{\"name\":\"test\",\"version\":\"1.0\"}}}' | npm run mcp:dev"
   },
   "keywords": [
     "workflow",
