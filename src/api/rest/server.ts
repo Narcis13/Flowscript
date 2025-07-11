@@ -15,6 +15,8 @@ import { createExecuteRoute } from './routes/execute';
 import { createStatusRoute } from './routes/status';
 import { createResumeRoute } from './routes/resume';
 import { createGoogleAuthRoutes } from './routes/google-auth';
+import { createNodeRoutes } from './routes/nodes';
+import { createGmailRoutes } from './routes/gmail';
 
 /**
  * Create and configure the Hono app
@@ -91,6 +93,17 @@ export function createApp(): Hono {
           callback: 'GET /api/auth/google/callback',
           status: 'GET /api/auth/status',
           profile: 'GET /api/auth/gmail/profile'
+        },
+        nodes: {
+          list: 'GET /api/nodes',
+          metadata: 'GET /api/nodes/:nodeId',
+          execute: 'POST /api/nodes/:nodeId/execute',
+          chain: 'POST /api/nodes/chain/execute'
+        },
+        gmail: {
+          emails: 'GET /api/gmail/emails',
+          send: 'POST /api/gmail/send',
+          search: 'GET /api/gmail/search'
         }
       }
     });
@@ -137,6 +150,12 @@ export function createApp(): Hono {
   
   // Mount auth routes
   app.route('/api/auth', createGoogleAuthRoutes());
+  
+  // Mount node execution routes
+  app.route('/api/nodes', createNodeRoutes());
+  
+  // Mount Gmail routes
+  app.route('/api/gmail', createGmailRoutes());
 
   // Serve static files AFTER API routes
   // Manual static file serving for better control
@@ -173,6 +192,10 @@ export function createApp(): Hono {
  * Start the server
  */
 export async function startServer(port: number = 3013): Promise<{ app: Hono; server: any }> {
+  // Register all nodes before starting the server
+  const { registerAllNodes } = await import('../../nodes/registerAll');
+  registerAllNodes();
+  
   // Initialize services
   const storage = WorkflowStorage.getInstance();
   storage.loadExampleWorkflows();

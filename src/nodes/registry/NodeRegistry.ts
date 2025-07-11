@@ -243,6 +243,28 @@ export class NodeRegistry {
     });
     return result;
   }
+
+  /**
+   * Get all nodes (returns a map of node names to node instances)
+   */
+  getAllNodes(): Record<string, Node> {
+    const result: Record<string, Node> = {};
+    this.nodes.forEach((entry, name) => {
+      result[name] = entry.factory();
+    });
+    return result;
+  }
+
+  /**
+   * Get a node instance by name (alias for create)
+   */
+  getNode(name: string): Node | undefined {
+    try {
+      return this.create(name);
+    } catch {
+      return undefined;
+    }
+  }
 }
 
 /**

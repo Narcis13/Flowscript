@@ -311,7 +311,7 @@ export class WorkflowValidatorTool implements Node {
       // Validate branches/body
       if (typeof element[1] === 'object' && !Array.isArray(element[1])) {
         // Branch map
-        for (const [edge, branch of Object.entries(element[1]) {
+        for (const [edge, branch] of Object.entries(element[1])) {
           if (branch !== null) {
             if (Array.isArray(branch)) {
               branch.forEach((node, i) => {

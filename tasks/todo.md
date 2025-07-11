@@ -383,3 +383,50 @@
 - **Natural Language**: AI can discover and compose workflows
 - **Type Safety**: Full TypeScript support throughout
 - **Educational**: Serves as MCP implementation reference
+
+## Recent Updates (Direct Node Execution API - January 11, 2025)
+### Direct Node Execution Feature
+- **Created NodeExecutor Service**: Service for executing nodes directly without workflows
+  - Supports individual node execution with config parameters
+  - Supports chaining multiple nodes in sequence
+  - Creates minimal ExecutionContext with StateManager and RuntimeContext
+  - Returns edge results and final state after execution
+- **Generic Node Execution API**:
+  - GET /api/nodes - List all available nodes with metadata
+  - GET /api/nodes/:nodeId - Get specific node metadata
+  - POST /api/nodes/:nodeId/execute - Execute any node with config
+  - POST /api/nodes/chain/execute - Execute multiple nodes in sequence
+- **Gmail-Specific API Endpoints**:
+  - GET /api/gmail/emails - Retrieve emails with automatic auth
+  - POST /api/gmail/send - Send emails through Gmail
+  - GET /api/gmail/search - Advanced email search with filters
+- **Implementation Benefits**:
+  - Direct node reuse outside workflows
+  - API-first node development
+  - Easy integration testing
+  - Building custom endpoints using node composition
+
+### Example Usage
+```bash
+# Execute a single node
+curl -X POST http://localhost:3013/api/nodes/googleConnect/execute \
+  -H "Content-Type: application/json" \
+  -d '{"config": {"email": "user@gmail.com"}}'
+
+# Get last 10 emails
+curl "http://localhost:3013/api/gmail/emails?email=user@gmail.com&maxResults=10"
+
+# Chain nodes
+curl -X POST http://localhost:3013/api/nodes/chain/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nodeIds": ["googleConnect", "listEmails"],
+    "config": {"email": "user@gmail.com", "maxResults": 5}
+  }'
+```
+
+### API Enhancement Status
+- **New Services**: NodeExecutor with single and chain execution
+- **New Routes**: /api/nodes/* and /api/gmail/* endpoints
+- **Integration**: Seamlessly integrated with existing Hono server
+- **Testing**: Ready for testing with Gmail integration

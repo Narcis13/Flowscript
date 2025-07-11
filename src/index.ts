@@ -14,8 +14,15 @@ export const VERSION = '0.1.0';
 export * from './core';
 export * from './nodes';
 
-// API exports
-export * from './api';
+// API exports - selective to avoid conflicts
+export { 
+  WorkflowStorage, 
+  ExecutionManager, 
+  ExecutionStatus, 
+  type ExecutionMetadata 
+} from './api/services';
+export { createApp, startServer } from './api/rest';
+export { createWebSocketServer } from './api/websocket';
 
 // Convenience function to start the API server
 export { startServer as startAPIServer } from './api/rest/server';
